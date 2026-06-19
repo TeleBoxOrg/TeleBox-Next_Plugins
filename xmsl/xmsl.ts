@@ -421,14 +421,14 @@ class XMSLPlugin extends Plugin {
 							if ((doc as any)?._ === 'document') {
 								if (doc.mimeType === TGS_MIME) {
 									await msg.edit({
-										text: html`❌ TGS 贴纸转换失败
+										text: html`❌ TGS 贴纸转换失败<br><br>
 需要安装: <code>pip3 install rlottie-python</code> 和 <code>ffmpeg</code>`,
 									});
 									return;
 								}
 								if (doc.mimeType === WEBM_MIME) {
 									await msg.edit({
-										text: html`❌ WebM 贴纸转换失败
+										text: html`❌ WebM 贴纸转换失败<br><br>
 需要安装: <code>ffmpeg</code>`,
 									});
 									return;
@@ -506,7 +506,7 @@ class XMSLPlugin extends Plugin {
 
 				default:
 					await msg.edit({
-						text: html`❌ 未知配置项
+						text: html`❌ 未知配置项<br><br>
 支持: mode, key, url, model`,
 					});
 					return;
@@ -525,26 +525,26 @@ class XMSLPlugin extends Plugin {
 
 	private async showStatus(msg: MessageContext) {
 		const modeEmoji = this.config.apiMode === 'gemini' ? '🔵' : '🟠';
-		const statusText = html`🧠 <b>XMSL 状态</b>
-
-${modeEmoji} 模式: ${this.config.apiMode}
-🔑 密钥: ${this.config.apiKey ? '✅ 已设置' : '❌ 未设置'}
-📍 地址: ${this.config.baseUrl.replace(/\/$/, '')}
-🤖 模型: ${this.config.model}
-
+		const statusText = html`🧠 <b>XMSL 状态</b><br><br>
+<br><br>
+${modeEmoji} 模式: ${this.config.apiMode}<br>
+🔑 密钥: ${this.config.apiKey ? '✅ 已设置' : '❌ 未设置'}<br>
+📍 地址: ${this.config.baseUrl.replace(/\/$/, '')}<br>
+🤖 模型: ${this.config.model}<br>
+<br>
 使用  查看帮助`;
 
 		await msg.edit({ text: statusText });
 	}
 
 	private async showConfig(msg: MessageContext) {
-		const configText = html`<b>⚙️ 配置信息</b>
-
-mode: ${this.config.apiMode}
-key: ${this.config.apiKey ? '✅ 已设置' : '❌ 未设置'}
-url: <code>${this.config.baseUrl.replace(/\/$/, '')}</code>
-model: <code>${this.config.model}</code>
-
+		const configText = html`<b>⚙️ 配置信息</b><br><br>
+<br><br>
+mode: ${this.config.apiMode}<br>
+key: ${this.config.apiKey ? '✅ 已设置' : '❌ 未设置'}<br>
+url: <code>${this.config.baseUrl.replace(/\/$/, '')}</code><br>
+model: <code>${this.config.model}</code><br>
+<br>
 使用 <code>${mainPrefix}xm set [key] [value]</code> 修改配置`;
 
 		await msg.edit({ text: configText });

@@ -235,7 +235,7 @@ class QRPlugin extends Plugin {
           } catch (error: any) {
             const errorMsg = error.message || '未知错误';
             await msg.edit({
-              text: html`❌ <b>生成二维码失败</b>\n\n${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
+              text: html`❌ <b>生成二维码失败</b><br><br>${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
             });
           }
           return;
@@ -271,7 +271,7 @@ class QRPlugin extends Plugin {
                 .map(data => `<code>${htmlEscape(data)}</code>`)
                 .join('\n\n');
               await msg.edit({
-                text: html`✅ <b>成功解码二维码:</b>\n\n${resultText}`
+                text: html`✅ <b>成功解码二维码:</b><br><br>${resultText}`
               });
             } else {
               await msg.edit({
@@ -281,7 +281,7 @@ class QRPlugin extends Plugin {
           } catch (error: any) {
             const errorMsg = error.message || '未知错误';
             await msg.edit({
-              text: html`❌ <b>解码失败</b>\n\n${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
+              text: html`❌ <b>解码失败</b><br><br>${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
             });
           }
           return;
@@ -300,7 +300,7 @@ class QRPlugin extends Plugin {
           } catch (error: any) {
             const errorMsg = error.message || '未知错误';
             await msg.edit({
-              text: html`❌ <b>生成二维码失败</b>\n\n${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
+              text: html`❌ <b>生成二维码失败</b><br><br>${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
             });
           }
           return;
@@ -308,13 +308,13 @@ class QRPlugin extends Plugin {
 
         // 4. 如果没有任何有效输入，显示帮助信息
         await msg.edit({
-          text: html`ℹ️ <b>QR 工具使用方法:</b>\n\n• <code>qr &lt;文本&gt;</code>\n  (将文本转为二维码)\n\n• 回复文本消息使用 <code>qr</code>\n  (将消息内容转为二维码)\n\n• 回复图片/贴纸使用 <code>qr</code>\n  (解码图中的二维码)`
+          text: html`ℹ️ <b>QR 工具使用方法:</b><br><br>• <code>qr &lt;文本&gt;</code><br>  (将文本转为二维码)<br><br>• 回复文本消息使用 <code>qr</code><br>  (将消息内容转为二维码)<br><br>• 回复图片/贴纸使用 <code>qr</code><br>  (解码图中的二维码)`
         });
       } catch (error: any) {
         console.error('QR Plugin Error:', error);
         const errorMsg = error.message || '未知错误';
         await msg.edit({
-          text: html`❌ <b>插件执行失败</b>\n\n${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
+          text: html`❌ <b>插件执行失败</b><br><br>${errorMsg.includes('❌') ? errorMsg : `<code>${htmlEscape(errorMsg)}</code>`}`
         });
       }
     }

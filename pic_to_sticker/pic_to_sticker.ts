@@ -267,7 +267,7 @@ class PicToStickerPlugin extends Plugin {
       // 检查是否回复了消息
       if (!msg.replyToMessage) {
         await msg.edit({
-          text: html`❌ <b>请回复包含图片的消息</b>\n\n使用方法:\n1. 回复包含多张图片的消息\n2. 发送 <code>${mainPrefix}pts batch</code>`
+          text: html`❌ <b>请回复包含图片的消息</b><br><br>使用方法:<br>1. 回复包含多张图片的消息<br>2. 发送 <code>${mainPrefix}pts batch</code>`
         });
         return;
       }
@@ -354,7 +354,7 @@ class PicToStickerPlugin extends Plugin {
       const media = targetMsg.media as any;
       if (!media || !(media._ === 'messageMediaPhoto' || media.photo)) {
         await msg.edit({
-          text: html`❌ <b>请回复包含图片的消息</b>\n\n使用方法：\n1. 回复包含图片的消息\n2. 发送 <code>${mainPrefix}pts</code> 或 <code>${mainPrefix}pts [表情]</code>`
+          text: html`❌ <b>请回复包含图片的消息</b><br><br>使用方法：<br>1. 回复包含图片的消息<br>2. 发送 <code>${mainPrefix}pts</code> 或 <code>${mainPrefix}pts [表情]</code>`
         });
         return;
       }

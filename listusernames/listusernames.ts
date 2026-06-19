@@ -53,8 +53,8 @@ class ListUsernamesPlugin extends Plugin {
 
         if (!result.chats || result.chats.length === 0) {
           await msg.edit({ 
-            text: html`📭 <b>没有找到公开群组/频道</b>
-
+            text: html`📭 <b>没有找到公开群组/频道</b><br><br>
+<br><br>
 您目前没有拥有任何公开群组或频道` 
           });
           return;

@@ -184,7 +184,7 @@ class SubStorePlugin extends Plugin {
             const dockerCheck = await checkDockerIntegrity();
             if (!dockerCheck.valid) {
               await msg.edit({
-                text: html`❌ Docker检查失败: ${dockerCheck.error}\n\n🔧 请先执行: <code>${mainPrefix}sub fix-docker</code>`,
+                text: html`❌ Docker检查失败: ${dockerCheck.error}<br><br>🔧 请先执行: <code>${mainPrefix}sub fix-docker</code>`,
               });
               return;
             }

@@ -165,14 +165,14 @@ class HisPlugin extends Plugin {
         if (error.message?.includes("FLOOD_WAIT")) {
           const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
           await msg.edit({
-            text: html`⏳ <b>请求过于频繁</b>\n\n需要等待 ${waitTime} 秒后重试`,
+            text: html`⏳ <b>请求过于频繁</b><br><br>需要等待 ${waitTime} 秒后重试`,
           });
           return;
         }
         
         if (error.message?.includes("MESSAGE_TOO_LONG")) {
           await msg.edit({
-            text: html`❌ <b>消息过长</b>\n\n请减少查询数量`,
+            text: html`❌ <b>消息过长</b><br><br>请减少查询数量`,
           });
           return;
         }

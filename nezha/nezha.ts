@@ -522,7 +522,7 @@ const nezha = async (msg: MessageContext) => {
             .map((s) => `• <code>${s.id}</code> - ${htmlEscape(s.name)}`)
             .join("\n");
           await msg.edit({
-            text: html`❌ 未找到匹配的服务器\n\n<b>在线服务器列表:</b>\n${serverList}\n\n用法: <code>nezha chart [服务器名/ID]</code>`,
+            text: html`❌ 未找到匹配的服务器<br><br><b>在线服务器列表:</b><br>${serverList}<br><br>用法: <code>nezha chart [服务器名/ID]</code>`,
           });
           return;
         }
@@ -609,7 +609,7 @@ const nezha = async (msg: MessageContext) => {
       } else {
         const status = config.serviceMonitor !== false ? "开启" : "关闭";
         await msg.edit({
-          text: html`📶 服务监控当前状态: <b>${status}</b>\n\n用法: <code>nezha service on/off</code>`,
+          text: html`📶 服务监控当前状态: <b>${status}</b><br><br>用法: <code>nezha service on/off</code>`,
         });
       }
       return;
@@ -621,18 +621,18 @@ const nezha = async (msg: MessageContext) => {
 
       if (!url || !secretOrPath) {
         await msg.edit({
-          text: html`❌ <b>设置哪吒监控</b>
-
-<b>用法:</b>
-<code>nezha set [面板地址] [JWT Secret]</code>
-<code>nezha set [面板地址] [config.yaml路径]</code>
-
-<b>示例:</b>
-<code>nezha set https://nezha.example.com your_jwt_secret</code>
-<code>nezha set https://nezha.example.com /opt/nezha/data/config.yaml</code>
-
-<b>说明:</b>
-• 可直接填写 jwt_secret_key
+          text: html`❌ <b>设置哪吒监控</b><br><br>
+<br><br>
+<b>用法:</b><br><br>
+<code>nezha set [面板地址] [JWT Secret]</code><br><br>
+<code>nezha set [面板地址] [config.yaml路径]</code><br><br>
+<br><br>
+<b>示例:</b><br><br>
+<code>nezha set https://nezha.example.com your_jwt_secret</code><br><br>
+<code>nezha set https://nezha.example.com /opt/nezha/data/config.yaml</code><br><br>
+<br><br>
+<b>说明:</b><br><br>
+• 可直接填写 jwt_secret_key<br><br>
 • 或填写 config.yaml 路径，自动读取 secret`,
         });
         return;
@@ -649,10 +649,10 @@ const nezha = async (msg: MessageContext) => {
         const fileSecret = readSecretFromConfig(secretOrPath);
         if (!fileSecret) {
           await msg.edit({
-            text: html`❌ <b>配置文件读取失败</b>
-
-无法从 <code>${htmlEscape(secretOrPath)}</code> 读取 jwt_secret_key
-
+            text: html`❌ <b>配置文件读取失败</b><br><br>
+<br><br>
+无法从 <code>${htmlEscape(secretOrPath)}</code> 读取 jwt_secret_key<br>
+<br>
 请检查文件路径是否正确`,
           });
           return;
@@ -670,19 +670,19 @@ const nezha = async (msg: MessageContext) => {
         await fetchServers(config);
         saveConfig(config);
         await msg.edit({
-          text: html`✅ <b>哪吒监控配置成功</b>
-
-<b>面板地址:</b> <code>${htmlEscape(url)}</code>
-<b>认证方式:</b> ${config.configPath ? "配置文件自动读取" : "JWT Secret"}
-
+          text: html`✅ <b>哪吒监控配置成功</b><br><br>
+<br><br>
+<b>面板地址:</b> <code>${htmlEscape(url)}</code><br>
+<b>认证方式:</b> ${config.configPath ? "配置文件自动读取" : "JWT Secret"}<br>
+<br>
 使用 <code>nezha</code> 查看服务器状态`,
         });
       } catch (error: any) {
         await msg.edit({
-          text: html`❌ <b>配置验证失败</b>
-
-<b>错误:</b> ${htmlEscape(error.message)}
-
+          text: html`❌ <b>配置验证失败</b><br><br>
+<br><br>
+<b>错误:</b> ${htmlEscape(error.message)}<br>
+<br>
 请检查面板地址和 Secret 是否正确`,
         });
       }
@@ -693,14 +693,14 @@ const nezha = async (msg: MessageContext) => {
 
     if (!config) {
       await msg.edit({
-        text: html`📊 <b>哪吒监控插件</b>
-
-<b>首次使用请先配置:</b>
-<code>nezha set [面板地址] [JWT Secret]</code>
-<code>nezha set [面板地址] [config.yaml路径]</code>
-
-<b>示例:</b>
-<code>nezha set https://nezha.example.com your_secret</code>
+        text: html`📊 <b>哪吒监控插件</b><br><br>
+<br><br>
+<b>首次使用请先配置:</b><br><br>
+<code>nezha set [面板地址] [JWT Secret]</code><br><br>
+<code>nezha set [面板地址] [config.yaml路径]</code><br><br>
+<br><br>
+<b>示例:</b><br><br>
+<code>nezha set https://nezha.example.com your_secret</code><br><br>
 <code>nezha set https://nezha.example.com /opt/nezha/data/config.yaml</code>`,
       });
       return;
@@ -763,10 +763,10 @@ const nezha = async (msg: MessageContext) => {
   } catch (error: any) {
     console.error("NeZha plugin error:", error);
     await msg.edit({
-      text: html`❌ <b>获取失败</b>
-
-<b>错误:</b> ${htmlEscape(error.message || "未知错误")}
-
+      text: html`❌ <b>获取失败</b><br><br>
+<br><br>
+<b>错误:</b> ${htmlEscape(error.message || "未知错误")}<br>
+<br>
 请检查网络连接或重新配置`,
     });
   }

@@ -162,7 +162,7 @@ class EatGifPlugin extends Plugin {
 
       if (!msg.replyToMessage && !trigger?.replyToMessage) {
         await msg.edit({
-          text: html`💡 请先回复一个用户的消息再执行\n\n使用：<code>${commandName} list</code> 查看表情列表`,
+          text: html`💡 请先回复一个用户的消息再执行<br><br>使用：<code>${commandName} list</code> 查看表情列表`,
         });
         return;
       }

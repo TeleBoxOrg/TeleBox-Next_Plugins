@@ -396,7 +396,7 @@ class PanguPlugin extends Plugin {
       await msg.edit({ text: html`❌ 全局模式已关闭` });
     } else {
       await msg.edit({
-        text: html`❌ 无效的参数\n\n使用：<code>${mainPrefix}pangu global on/off</code>`
+        text: html`❌ 无效的参数<br><br>使用：<code>${mainPrefix}pangu global on/off</code>`
       });
     }
   }
@@ -405,7 +405,7 @@ class PanguPlugin extends Plugin {
   private async handleTest(msg: MessageContext, text: string): Promise<void> {
     if (!text.trim()) {
       await msg.edit({
-        text: html`❌ 请提供测试文本\n\n使用：<code>${mainPrefix}pangu 你好World123测试</code>`
+        text: html`❌ 请提供测试文本<br><br>使用：<code>${mainPrefix}pangu 你好World123测试</code>`
       });
       return;
     }
@@ -414,7 +414,7 @@ class PanguPlugin extends Plugin {
     const formatted = PanguSpacer.spacing(text);
     
     await msg.edit({
-      text: html`🔤 <b>Pangu 格式化测试</b>\n\n<b>原始文本：</b>\n<code>${htmlEscape(text)}</code>\n\n<b>格式化后：</b>\n<code>${htmlEscape(formatted)}</code>\n\n<b>状态：</b> ${text === formatted ? "无需调整" : "已优化"}`
+      text: html`🔤 <b>Pangu 格式化测试</b><br><br><b>原始文本：</b><br><code>${htmlEscape(text)}</code><br><br><b>格式化后：</b><br><code>${htmlEscape(formatted)}</code><br><br><b>状态：</b> ${text === formatted ? "无需调整" : "已优化"}`
     });
   }
 
@@ -439,7 +439,7 @@ class PanguPlugin extends Plugin {
     }
 
     await msg.edit({
-      text: html`📊 <b>Pangu 格式化状态</b>\n\n💬 <b>当前会话：</b> <code>${htmlEscape(chatId)}</code>\n🎯 <b>生效状态：</b> ${effectiveStatus}\n\n⚪ <b>白名单：</b> ${white ? "✅ 是" : "❌ 否"}\n⚫ <b>黑名单：</b> ${black ? "✅ 是" : "❌ 否"}\n💬 <b>会话设置：</b> ${chatMode === null ? "未设置" : (chatMode ? "✅ 开启" : "❌ 关闭")}\n🌐 <b>全局模式：</b> ${globalMode ? "✅ 开启" : "❌ 关闭"}\n\n📈 <b>统计信息：</b>\n• 已格式化消息：${stats.formattedMessages}\n• 启用会话数：${stats.enabledChats}\n• 最后格式化：${stats.lastFormatted ? new Date(stats.lastFormatted).toLocaleString() : "从未"}`
+      text: html`📊 <b>Pangu 格式化状态</b><br><br>💬 <b>当前会话：</b> <code>${htmlEscape(chatId)}</code><br>🎯 <b>生效状态：</b> ${effectiveStatus}<br><br>⚪ <b>白名单：</b> ${white ? "✅ 是" : "❌ 否"}<br>⚫ <b>黑名单：</b> ${black ? "✅ 是" : "❌ 否"}<br>💬 <b>会话设置：</b> ${chatMode === null ? "未设置" : (chatMode ? "✅ 开启" : "❌ 关闭")}<br>🌐 <b>全局模式：</b> ${globalMode ? "✅ 开启" : "❌ 关闭"}<br><br>📈 <b>统计信息：</b><br>• 已格式化消息：${stats.formattedMessages}<br>• 启用会话数：${stats.enabledChats}<br>• 最后格式化：${stats.lastFormatted ? new Date(stats.lastFormatted).toLocaleString() : "从未"}`
     });
   }
 
@@ -447,7 +447,7 @@ class PanguPlugin extends Plugin {
   private async showStats(msg: MessageContext): Promise<void> {
     const stats = this.db.data.stats;
     await msg.edit({
-      text: html`📈 <b>Pangu 统计信息</b>\n\n• 已格式化消息：${stats.formattedMessages}\n• 启用会话数：${stats.enabledChats}\n• 最后格式化：${stats.lastFormatted ? new Date(stats.lastFormatted).toLocaleString() : "从未"}\n• 白名单数量：${this.db.data.whitelist.length}\n• 黑名单数量：${this.db.data.blacklist.length}\n• 自定义设置会话数：${Object.keys(this.db.data.chats).length}`
+      text: html`📈 <b>Pangu 统计信息</b><br><br>• 已格式化消息：${stats.formattedMessages}<br>• 启用会话数：${stats.enabledChats}<br>• 最后格式化：${stats.lastFormatted ? new Date(stats.lastFormatted).toLocaleString() : "从未"}<br>• 白名单数量：${this.db.data.whitelist.length}<br>• 黑名单数量：${this.db.data.blacklist.length}<br>• 自定义设置会话数：${Object.keys(this.db.data.chats).length}`
     });
   }
 
@@ -534,7 +534,7 @@ class PanguPlugin extends Plugin {
         }
 
         await msg.edit({
-          text: html`❌ 未知命令: <code>${htmlEscape(subCommand)}</code>\n\n${help_text}`
+          text: html`❌ 未知命令: <code>${htmlEscape(subCommand)}</code><br><br>${help_text}`
         });
 
       } catch (error: any) {

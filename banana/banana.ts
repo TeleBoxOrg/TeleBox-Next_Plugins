@@ -186,7 +186,7 @@ async function handleConfig(
       if (!subValue) {
         const current = await resolveMaxImageBytes();
         await msg.edit({
-          text: html`当前图片大小上限：${formatBytes(current)}（范围 ${formatBytes(MIN_ALLOWED_IMAGE_BYTES)} - ${formatBytes(MAX_ALLOWED_IMAGE_BYTES)}）\n使用 <code>${mainPrefix}banana limit default</code> 可恢复默认值`,
+          text: html`当前图片大小上限：${formatBytes(current)}（范围 ${formatBytes(MIN_ALLOWED_IMAGE_BYTES)} - ${formatBytes(MAX_ALLOWED_IMAGE_BYTES)}）<br>使用 <code>${mainPrefix}banana limit default</code> 可恢复默认值`,
         });
         return;
       }

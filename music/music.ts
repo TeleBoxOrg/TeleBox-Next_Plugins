@@ -1945,25 +1945,25 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
     if (args.length < 2) {
       // 编辑原消息而不是回复
       await msg.edit({
-        text: html`❌ <b>参数不足</b>
-
-<b>正确格式：</b>
-<code>${commandName} set cookie [YouTube Cookie]</code>
-<code>${commandName} set proxy [代理地址]</code>
-<code>${commandName} set api_key [Gemini API密钥]</code>
-<code>${commandName} set base_url [Gemini Base URL]</code>
-<code>${commandName} set model [Gemini 模型]</code>
-<code>${commandName} set quality [音质]</code>
-
-<b>代理配置示例：</b>
-<code>${commandName} set proxy socks5://127.0.0.1:1080</code>
-<code>${commandName} set proxy http://127.0.0.1:8080</code>
-<code>${commandName} set proxy socks5://127.0.0.1:40000</code> (WireProxy)
-<code>${commandName} set proxy none</code> (清空代理)
-
-<b>音质示例：</b>
-<code>${commandName} set quality 320k</code>
-<code>${commandName} set quality 192k</code>
+        text: html`❌ <b>参数不足</b><br><br>
+<br><br>
+<b>正确格式：</b><br><br>
+<code>${commandName} set cookie [YouTube Cookie]</code><br>
+<code>${commandName} set proxy [代理地址]</code><br>
+<code>${commandName} set api_key [Gemini API密钥]</code><br>
+<code>${commandName} set base_url [Gemini Base URL]</code><br>
+<code>${commandName} set model [Gemini 模型]</code><br>
+<code>${commandName} set quality [音质]</code><br>
+<br>
+<b>代理配置示例：</b><br>
+<code>${commandName} set proxy socks5://127.0.0.1:1080</code><br>
+<code>${commandName} set proxy http://127.0.0.1:8080</code><br>
+<code>${commandName} set proxy socks5://127.0.0.1:40000</code> (WireProxy)<br>
+<code>${commandName} set proxy none</code> (清空代理)<br>
+<br>
+<b>音质示例：</b><br>
+<code>${commandName} set quality 320k</code><br>
+<code>${commandName} set quality 192k</code><br>
 <code>${commandName} set quality 0</code> (VBR 最高质量)`,
       });
       return;
@@ -2006,7 +2006,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
           finalValue = `${kb}k`;
         } else {
           await msg.edit({
-            text: html`❌ <b>音质无效</b>\n\n支持 <code>0..10</code> 或 <code>128k/192k/256k/320k</code>`,
+            text: html`❌ <b>音质无效</b><br><br>支持 <code>0..10</code> 或 <code>128k/192k/256k/320k</code>`,
           });
           return;
         }
@@ -2015,7 +2015,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
         finalValue = "";
       } else {
         await msg.edit({
-          text: html`❌ <b>音质无效</b>\n\n支持 <code>0..10</code> 或 <code>128k/192k/256k/320k</code>`,
+          text: html`❌ <b>音质无效</b><br><br>支持 <code>0..10</code> 或 <code>128k/192k/256k/320k</code>`,
         });
         return;
       }
@@ -2068,7 +2068,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
       });
     } else {
       await msg.edit({
-        text: html`❌ <b>配置失败</b>\n\n无法设置 <code>${rawKey}</code>`,
+        text: html`❌ <b>配置失败</b><br><br>无法设置 <code>${rawKey}</code>`,
       });
     }
   }
@@ -2082,7 +2082,7 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
     await this.downloader.cleanCache(0);
 
     await msg.edit({
-      text: html`✨ <b>清理完成</b>\n\n临时文件已全部删除`,
+      text: html`✨ <b>清理完成</b><br><br>临时文件已全部删除`,
     });
   }
 
@@ -2101,15 +2101,15 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
     const ytdlpAvailable = await DependencyManager.checkYtDlp();
     if (!ytdlpAvailable) {
       await msg.edit({
-        text: html`❌ <b>缺少必要组件</b>
-
-🛠️ <b>解决方案：</b>
-<code>sudo pip install --upgrade --force-reinstall yt-dlp --break-system-packages</code>
-
-🚀 <b>网络问题？试试 WARP：</b>
-<code>wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh e</code>
-
-💡 <b>提示：</b>配置 Gemini API 可提升搜索准确率
+        text: html`❌ <b>缺少必要组件</b><br><br>
+<br><br>
+🛠️ <b>解决方案：</b><br><br>
+<code>sudo pip install --upgrade --force-reinstall yt-dlp --break-system-packages</code><br><br>
+<br><br>
+🚀 <b>网络问题？试试 WARP：</b><br><br>
+<code>wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh e</code><br><br>
+<br><br>
+💡 <b>提示：</b>配置 Gemini API 可提升搜索准确率<br><br>
 <code>${commandName} set api_key [你的Gemini密钥]</code>`,
       });
       return;
@@ -2119,15 +2119,15 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
     const deps = await this.downloader.checkDependencies();
     if (!deps.ytdlp) {
       await msg.edit({
-        text: html`❌ <b>缺少下载器</b>
-
-🛠️ <b>安装 yt-dlp：</b>
-<code>sudo pip install --upgrade --force-reinstall yt-dlp --break-system-packages</code>
-
-🌐 <b>网络受限？配置代理：</b>
-<code>${commandName} set proxy socks5://127.0.0.1:1080</code>
-
-🍪 <b>或设置 Cookie 绕过限制：</b>
+        text: html`❌ <b>缺少下载器</b><br><br>
+<br><br>
+🛠️ <b>安装 yt-dlp：</b><br><br>
+<code>sudo pip install --upgrade --force-reinstall yt-dlp --break-system-packages</code><br><br>
+<br><br>
+🌐 <b>网络受限？配置代理：</b><br><br>
+<code>${commandName} set proxy socks5://127.0.0.1:1080</code><br>
+<br>
+🍪 <b>或设置 Cookie 绕过限制：</b><br>
 <code>${commandName} set cookie [YouTube Cookie]</code>`,
       });
       return;
@@ -2171,15 +2171,15 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
 
       if (!url) {
         await statusMsg.edit({
-          text: html`😔 <b>未找到相关音乐</b>
-
-🔍 <b>建议尝试：</b>
-• 更换搜索关键词
-• 配置 Cookie 绕过地区限制
-• 使用 WARP 改善网络连接
-
-⚙️ <b>快速配置：</b>
-<code>${commandName} set cookie [Cookie]</code>
+          text: html`😔 <b>未找到相关音乐</b><br><br>
+<br><br>
+🔍 <b>建议尝试：</b><br><br>
+• 更换搜索关键词<br><br>
+• 配置 Cookie 绕过地区限制<br><br>
+• 使用 WARP 改善网络连接<br><br>
+<br><br>
+⚙️ <b>快速配置：</b><br><br>
+<code>${commandName} set cookie [Cookie]</code><br>
 <code>${commandName} set api_key [Gemini密钥]</code>`,
         });
         return;
@@ -2200,18 +2200,18 @@ ${apiKey ? "✅" : "⚪"} <b>AI搜索:</b> ${apiKey ? "已启用" : "未配置"}
 
       if (!downloadResult.audioPath) {
         await statusMsg.edit({
-          text: html`❌ <b>下载失败</b>
-
-🛠️ <b>解决方案：</b>
-• 配置 YouTube Cookie 绕过限制
-• 设置网络代理或使用 WARP
-• 检查网络连接状态
-
-⚙️ <b>快速配置：</b>
-<code>${commandName} set cookie [Cookie]</code>
-<code>${commandName} set proxy [代理地址]</code>
-
-🚀 <b>WARP 安装：</b>
+          text: html`❌ <b>下载失败</b><br><br>
+<br><br>
+🛠️ <b>解决方案：</b><br><br>
+• 配置 YouTube Cookie 绕过限制<br><br>
+• 设置网络代理或使用 WARP<br><br>
+• 检查网络连接状态<br><br>
+<br><br>
+⚙️ <b>快速配置：</b><br><br>
+<code>${commandName} set cookie [Cookie]</code><br>
+<code>${commandName} set proxy [代理地址]</code><br>
+<br>
+🚀 <b>WARP 安装：</b><br>
 <code>wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh e</code>`,
         });
         return;

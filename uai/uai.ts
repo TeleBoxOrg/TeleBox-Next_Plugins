@@ -366,7 +366,7 @@ class UAIPlugin extends Plugin {
                     return;
                 } else {
                     await msg.edit({ 
-                        text: html`📊 当前折叠状态: <b>${db.data.collapse ? "开启" : "关闭"}</b>\n\n使用: <code>${mainPrefix}uai collapse on/off</code>`,
+                        text: html`📊 当前折叠状态: <b>${db.data.collapse ? "开启" : "关闭"}</b><br><br>使用: <code>${mainPrefix}uai collapse on/off</code>`,
                     });
                     return;
                 }
@@ -428,7 +428,7 @@ class UAIPlugin extends Plugin {
                 }).join("\n");
                 const collapseStatus = `折叠显示: ${db.data.collapse ? "✅ 开启" : "❌ 关闭"}`;
                 await msg.edit({ 
-                    text: html`📋 <b>供应商列表</b>\n\n${list}\n\n${collapseStatus}`, 
+                    text: html`📋 <b>供应商列表</b><br><br>${list}<br><br>${collapseStatus}`, 
                 });
                 return;
             }
@@ -492,13 +492,13 @@ class UAIPlugin extends Plugin {
             // ========== 主功能：引用消息分析 ==========
             // 检查是否引用了消息
             if (!msg.replyToMessage) {
-                await msg.edit({ text: html`❌ 请引用一条消息后使用此命令\n\n${getHelpText()}` });
+                await msg.edit({ text: html`❌ 请引用一条消息后使用此命令<br><br>${getHelpText()}` });
                 return;
             }
 
             // 检查 AI 配置
             if (!db.data.default_provider || !db.data.providers[db.data.default_provider]) {
-                await msg.edit({ text: html`❌ 请先配置 AI 供应商\n\n使用: <code>${mainPrefix}uai add 名称 url key type</code>` });
+                await msg.edit({ text: html`❌ 请先配置 AI 供应商<br><br>使用: <code>${mainPrefix}uai add 名称 url key type</code>` });
                 return;
             }
 

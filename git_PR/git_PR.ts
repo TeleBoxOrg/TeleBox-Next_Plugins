@@ -181,7 +181,7 @@ class GitManagerPlugin extends Plugin {
             await this.handleMergeAll(msg, args.slice(1));
             break;
           default:
-            await msg.edit({ text: html`❌ <b>未知子命令:</b> <code>${htmlEscape(sub)}</code>\n\n${help_text}` });
+            await msg.edit({ text: html`❌ <b>未知子命令:</b> <code>${htmlEscape(sub)}</code><br><br>${help_text}` });
         }
       } catch (error: any) {
         console.error('[git] 插件执行失败:', error);
@@ -192,7 +192,7 @@ class GitManagerPlugin extends Plugin {
 
   private async handleLogin(msg: MessageContext, args: string[]) {
     if (args.length < 3) {
-        await msg.edit({ text: html`❌ <b>参数不足</b>\n\n<b>格式:</b> <code>${mainPrefix}${pluginName} login &lt;邮箱&gt; &lt;用户名&gt; &lt;Token&gt;</code>` });
+        await msg.edit({ text: html`❌ <b>参数不足</b><br><br><b>格式:</b> <code>${mainPrefix}${pluginName} login &lt;邮箱&gt; &lt;用户名&gt; &lt;Token&gt;</code>` });
       return;
     }
 

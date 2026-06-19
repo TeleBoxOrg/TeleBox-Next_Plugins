@@ -169,7 +169,7 @@ class AffPlugin extends Plugin {
     
     if (affs.length === 0) {
       await msg.edit({
-        text: html`❌ <b>暂无Aff信息</b>\n\n💡 请回复一条消息使用 <code>${mainPrefix}aff save</code> 保存`,
+        text: html`❌ <b>暂无Aff信息</b><br><br>💡 请回复一条消息使用 <code>${mainPrefix}aff save</code> 保存`,
       });
       return;
     }
@@ -262,7 +262,7 @@ class AffPlugin extends Plugin {
     
     const affs = await this.getAffs();
     await msg.edit({
-      text: html`✅ <b>Aff信息保存成功！</b>\n🆔 当前序号：${affs.length}`,
+      text: html`✅ <b>Aff信息保存成功！</b><br>🆔 当前序号：${affs.length}`,
     });
   }
 
@@ -270,7 +270,7 @@ class AffPlugin extends Plugin {
   private async handleRemove(msg: MessageContext, param?: string): Promise<void> {
     if (!param) {
       await msg.edit({
-        text: html`❌ <b>请指定要删除的序号</b>\n💡 例如：<code>${mainPrefix}aff remove 1</code>`,
+        text: html`❌ <b>请指定要删除的序号</b><br>💡 例如：<code>${mainPrefix}aff remove 1</code>`,
       });
       return;
     }
