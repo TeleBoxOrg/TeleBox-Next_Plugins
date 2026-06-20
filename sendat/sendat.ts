@@ -1,6 +1,5 @@
 // plugins/sendat.ts
 import { Plugin } from "@utils/pluginBase";
-import { Api } from "telegram";
 import { getGlobalClient } from "@utils/globalClient";
 import { cronManager } from "@utils/cronManager";
 import { JSONFilePreset } from "lowdb/node";
@@ -309,8 +308,8 @@ class SendTaskManager {
   // 从cron管理器中移除任务
   private removeTaskFromCron(taskId: number): void {
     const taskName = `sendat_${taskId}`;
-    if (cronManager.hasTask(taskName)) {
-      cronManager.removeTask(taskName);
+    if (cronManager.has(taskName)) {
+      cronManager.del(taskName);
     }
   }
 
@@ -324,12 +323,8 @@ class SendTaskManager {
       if (task.cron) {
         // 定时任务（每天固定时间）
         const cronExpression = `${task.second} ${task.minute} ${task.hour} * * *`;
-        cronManager.addTask(taskName, {
-          cron: cronExpression,
-          description: `定时发送任务 #${task.task_id}`,
-          handler: async () => {
-            await this.executeTask(task);
-          }
+        cronManager.set(taskName, cronExpression, async () => {
+          await this.executeTask(task);
         });
       } else {
         // 间隔任务
@@ -353,12 +348,8 @@ class SendTaskManager {
             cronExpression = `*/${seconds} * * * * *`;
           }
           
-          cronManager.addTask(taskName, {
-            cron: cronExpression,
-            description: `间隔发送任务 #${task.task_id}`,
-            handler: async () => {
-              await this.executeTask(task);
-            }
+          cronManager.set(taskName, cronExpression, async () => {
+            await this.executeTask(task);
           });
         }
       }
@@ -374,14 +365,10 @@ class SendTaskManager {
       
       const cronExpression = `${targetTime.getSeconds()} ${targetTime.getMinutes()} ${targetTime.getHours()} ${targetTime.getDate()} ${targetTime.getMonth() + 1} *`;
       
-      cronManager.addTask(taskName, {
-        cron: cronExpression,
-        description: `单次发送任务 #${task.task_id}`,
-        handler: async () => {
-          await this.executeTask(task);
-          // 单次任务执行后删除
-          await this.removeTask(task.task_id);
-        }
+      cronManager.set(taskName, cronExpression, async () => {
+        await this.executeTask(task);
+        // 单次任务执行后删除
+        await this.removeTask(task.task_id);
       });
     }
   }
@@ -421,7 +408,7 @@ class SendTaskManager {
 // 插件主类
 class SendAtPlugin extends Plugin {
   private taskManager: SendTaskManager;
-  private readonly helpText: string;
+  private readonly helpText!: string;
 
   constructor() {
     super();
@@ -447,7 +434,7 @@ class SendAtPlugin extends Plugin {
 seconds, minutes, hours, date, times`;
   }
 
-  description = this.helpText;
+  get description() { return this.helpText; }
 
   cmdHandlers = {
     sendat: async (msg: any) => {
@@ -511,14 +498,16 @@ seconds, minutes, hours, date, times`;
 
     if (showAll) {
       // 检查管理员权限
-      const sudoDB = (await import("@utils/sudoDB")).default;
-      const sudoDBInstance = new sudoDB();
+      const { SudoDB } = await import("@utils/sudoDB");
+      const sudoDBInstance = new SudoDB();
       const userId = msg.senderId?.toJSNumber();
       
-      if (!userId || !sudoDBInstance.has(userId)) {
+      if (!userId || !sudoDBInstance.ls().some(u => u.uid === userId)) {
+        sudoDBInstance.close();
         await msg.edit({ text: "❌ 只有管理员可以查看所有任务" });
         return;
       }
+      sudoDBInstance.close();
       tasks = this.taskManager.getAllTasks();
     } else {
       tasks = this.taskManager.getUserTasks(chatId);
@@ -555,14 +544,16 @@ seconds, minutes, hours, date, times`;
 
     // 权限检查：只能删除自己的任务或者是管理员
     const chatId = msg.chatId?.toJSNumber() || 0;
-    const sudoDB = (await import("@utils/sudoDB")).default;
-    const sudoDBInstance = new sudoDB();
+    const { SudoDB } = await import("@utils/sudoDB");
+    const sudoDBInstance = new SudoDB();
     const userId = msg.senderId?.toJSNumber();
 
-    if (task.cid !== chatId && (!userId || !sudoDBInstance.has(userId))) {
+    if (task.cid !== chatId && (!userId || !sudoDBInstance.ls().some(u => u.uid === userId))) {
+      sudoDBInstance.close();
       await msg.edit({ text: "❌ 只能删除自己的任务" });
       return;
     }
+    sudoDBInstance.close();
 
     const success = await this.taskManager.removeTask(taskId);
     if (success) {

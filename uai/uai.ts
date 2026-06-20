@@ -240,11 +240,11 @@ async function collectMessages(
         }
     }
 
-    const messages = await client.getMessages(chatPeerId, iterParams);
+    const fetchedMessages = await client.getMessages(chatPeerId, iterParams);
     const normalizedFilterId = filterSenderId ? normalizeId(filterSenderId) : null;
     const needManualFilter = filterSenderId && !iterParams.fromUser;
 
-    for (const msg of messages) {
+    for (const msg of fetchedMessages) {
         const m = msg as any;
 
         // 时间检查 - 按数量获取时不检查时间
