@@ -637,7 +637,7 @@ class BikoPlugin extends Plugin {
         });
       } catch (error) {
         await msg.edit({
-          text: html(`❌ <b>Biko 执行失败</b>\n\n${htmlEscape(
+          text: html(`❌ <b>Biko 执行失败</b><br><br>${htmlEscape(
             extractErrorMessage(error),
           )}`),
           disableWebPreview: true,

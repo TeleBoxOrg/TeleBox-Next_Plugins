@@ -1082,7 +1082,7 @@ const speedtest = async (msg: MessageContext) => {
         .join("\n");
 
       await msg.edit({
-        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n${serverList}`)});
+        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>${serverList}`)});
     } else if (command === "set") {
       const serverId = parseInt(args[1]);
       if (!serverId || isNaN(serverId)) {
@@ -1093,7 +1093,7 @@ const speedtest = async (msg: MessageContext) => {
 
       saveDefaultServer(serverId);
       await msg.edit({
-        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n<code>默认服务器已设置为 ${serverId}</code>`)});
+        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br><code>默认服务器已设置为 ${serverId}</code>`)});
     } else if (command === "clear") {
       removeDefaultServer();
       await msg.edit({
@@ -1102,19 +1102,19 @@ const speedtest = async (msg: MessageContext) => {
       const defaultServer = getDefaultServer() || "Auto";
       const typePref = getPreferredType() || "默认(photo→sticker→file→txt)";
       await msg.edit({
-        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n<code>默认服务器: ${htmlEscape(String(defaultServer))}</code>\n<code>优先类型: ${htmlEscape(typePref)}</code>\n<code>Speedtest® CLI: ${SPEEDTEST_VERSION}</code>`)});
+        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br><code>默认服务器: ${htmlEscape(String(defaultServer))}</code><br><code>优先类型: ${htmlEscape(typePref)}</code><br><code>Speedtest® CLI: ${SPEEDTEST_VERSION}</code>`)});
     } else if (command === "type") {
       const t = (args[1] || "").toLowerCase();
       const valid: MessageType[] = ["photo", "sticker", "file", "txt"];
       if (!valid.includes(t as MessageType)) {
         await msg.edit({
-          text: html(`❌ <b>参数错误</b>\n\n<code>${commandName} type photo/sticker/file/txt</code> - 设置优先使用的消息类型`)});
+          text: html(`❌ <b>参数错误</b><br><br><code>${commandName} type photo/sticker/file/txt</code> - 设置优先使用的消息类型`)});
         return;
       }
       savePreferredType(t as MessageType);
       const order = getMessageOrder();
       await msg.edit({
-        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n<code>优先类型已设置为: ${t}</code>\n<code>当前顺序: ${order.join(
+        text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br><code>优先类型已设置为: ${t}</code><br><code>当前顺序: ${order.join(
           " → "
         )}</code>`)});
     } else if (command === "check") {
@@ -1126,10 +1126,10 @@ const speedtest = async (msg: MessageContext) => {
         const statusIcon = networkStatus.connected ? "✅" : "❌";
 
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n${statusIcon} <b>网络状态:</b> <code>${htmlEscape(networkStatus.message)}</code>\n\n<b>建议:</b>\n• 如果连接异常，请检查网络设置\n• 尝试更换网络环境或DNS服务器\n• 确认防火墙允许网络测试`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>${statusIcon} <b>网络状态:</b> <code>${htmlEscape(networkStatus.message)}</code><br><br><b>建议:</b><br>• 如果连接异常，请检查网络设置<br>• 尝试更换网络环境或DNS服务器<br>• 确认防火墙允许网络测试`)});
       } catch (error) {
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>网络检查失败: ${htmlEscape(String(error))}</code>`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>❌ <code>网络检查失败: ${htmlEscape(String(error))}</code>`)});
       }
     } else if (command === "test") {
       const serverId = parseInt(args[1]);
@@ -1150,10 +1150,10 @@ const speedtest = async (msg: MessageContext) => {
         const errorText = result.error ? `\n<b>错误:</b> <code>${htmlEscape(result.error)}</code>` : "";
 
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n${statusIcon} <b>服务器 ${htmlEscape(String(serverId))}:</b> <code>${htmlEscape(statusText)}</code>${pingText}${errorText}`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>${statusIcon} <b>服务器 ${htmlEscape(String(serverId))}:</b> <code>${htmlEscape(statusText)}</code>${pingText}${errorText}`)});
       } catch (error) {
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>测试失败: ${htmlEscape(String(error))}</code>`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>❌ <code>测试失败: ${htmlEscape(String(error))}</code>`)});
       }
     } else if (command === "best") {
       await msg.edit({
@@ -1171,14 +1171,14 @@ const speedtest = async (msg: MessageContext) => {
             .join('\n');
 
           await msg.edit({
-            text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n🎯 <b>推荐服务器 (按距离排序):</b>\n\n${serverList}\n\n💡 使用 <code>${commandName} set [ID]</code> 设为默认服务器\n💡 使用 <code>${commandName} [ID]</code> 直接测试`)});
+            text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>🎯 <b>推荐服务器 (按距离排序):</b><br><br>${serverList}<br><br>💡 使用 <code>${commandName} set [ID]</code> 设为默认服务器<br>💡 使用 <code>${commandName} [ID]</code> 直接测试`)});
         } else {
           await msg.edit({
             text: html("<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>无法获取服务器列表</code>\n\n💡 <b>建议:</b>\n• 检查网络连接\n• 稍后重试")});
         }
       } catch (error) {
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>获取服务器列表失败: ${htmlEscape(String(error))}</code>`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>❌ <code>获取服务器列表失败: ${htmlEscape(String(error))}</code>`)});
       }
     } else if (command === "diagnose") {
       await msg.edit({
@@ -1192,10 +1192,10 @@ const speedtest = async (msg: MessageContext) => {
         const fixText = diagnosis.needsReinstall ? `\n\n💡 <b>建议:</b> 使用 <code>${commandName} fix</code> 自动修复` : "";
 
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n${statusIcon} <b>可执行文件状态:</b> <code>${statusText}</code>${errorText}\n<b>平台:</b> <code>${process.platform}</code>\n<b>架构:</b> <code>${process.arch}</code>\n<b>路径:</b> <code>${SPEEDTEST_PATH}</code>\n<b>存在:</b> <code>${fs.existsSync(SPEEDTEST_PATH) ? '是' : '否'}</code>${fixText}`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>${statusIcon} <b>可执行文件状态:</b> <code>${statusText}</code>${errorText}<br><b>平台:</b> <code>${process.platform}</code><br><b>架构:</b> <code>${process.arch}</code><br><b>路径:</b> <code>${SPEEDTEST_PATH}</code><br><b>存在:</b> <code>${fs.existsSync(SPEEDTEST_PATH) ? '是' : '否'}</code>${fixText}`)});
       } catch (error) {
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>诊断失败: ${htmlEscape(String(error))}</code>`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>❌ <code>诊断失败: ${htmlEscape(String(error))}</code>`)});
       }
     } else if (command === "fix") {
       await msg.edit({
@@ -1204,10 +1204,10 @@ const speedtest = async (msg: MessageContext) => {
       try {
         await autoFixSpeedtest();
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n✅ <code>自动修复完成</code>\n<b>平台:</b> <code>${process.platform}</code>\n<b>路径:</b> <code>${SPEEDTEST_PATH}</code>\n\n💡 现在可以正常使用speedtest功能了`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>✅ <code>自动修复完成</code><br><b>平台:</b> <code>${process.platform}</code><br><b>路径:</b> <code>${SPEEDTEST_PATH}</code><br><br>💡 现在可以正常使用speedtest功能了`)});
       } catch (error) {
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>自动修复失败: ${htmlEscape(String(error))}</code>\n\n💡 <b>建议:</b>\n• 检查网络连接\n• 确认有足够的磁盘空间\n• 检查文件权限\n• 尝试手动执行 <code>${commandName} update</code>`)});
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>❌ <code>自动修复失败: ${htmlEscape(String(error))}</code><br><br>💡 <b>建议:</b><br>• 检查网络连接<br>• 确认有足够的磁盘空间<br>• 检查文件权限<br>• 尝试手动执行 <code>${commandName} update</code>`)});
       }
     } else if (command === "update") {
       await msg.edit({
@@ -1250,14 +1250,14 @@ const speedtest = async (msg: MessageContext) => {
         // 验证安装是否成功
         if (fs.existsSync(SPEEDTEST_PATH)) {
           await msg.edit({
-            text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n<code>Speedtest® CLI 已更新到最新版本</code>\n<code>平台: ${process.platform}</code>\n<code>路径: ${SPEEDTEST_PATH}</code>`)});
+            text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br><code>Speedtest® CLI 已更新到最新版本</code><br><code>平台: ${process.platform}</code><br><code>路径: ${SPEEDTEST_PATH}</code>`)});
         } else {
           throw new Error(`安装验证失败，可执行文件不存在: ${SPEEDTEST_PATH}`);
         }
       } catch (error) {
         console.error("Update failed:", error);
         await msg.edit({
-          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote>\n❌ <code>更新失败: ${htmlEscape(
+          text: html(`<blockquote><b>⚡️SPEEDTEST by OOKLA</b></blockquote><br>❌ <code>更新失败: ${htmlEscape(
             String(error)
           )}</code>\n\n💡 <b>建议:</b>\n• 检查网络连接\n• 确认有足够的磁盘空间\n• 检查文件权限`)});
       }
@@ -1268,7 +1268,7 @@ const speedtest = async (msg: MessageContext) => {
       const networkStatus = await checkNetworkConnectivity();
       if (!networkStatus.connected) {
         await msg.edit({
-          text: html(`❌ <b>网络连接异常，无法进行速度测试</b>\n\n<b>检测结果:</b> <code>${networkStatus.message}</code>\n\n💡 <b>建议:</b>\n• 检查网络连接是否正常\n• 尝试更换网络环境或DNS服务器\n• 确认防火墙允许网络测试\n• 使用 <code>${commandName} check</code> 重新检查连接`)});
+          text: html(`❌ <b>网络连接异常，无法进行速度测试</b><br><br><b>检测结果:</b> <code>${networkStatus.message}</code><br><br>💡 <b>建议:</b><br>• 检查网络连接是否正常<br>• 尝试更换网络环境或DNS服务器<br>• 确认防火墙允许网络测试<br>• 使用 <code>${commandName} check</code> 重新检查连接`)});
         return;
       }
 
@@ -1424,11 +1424,11 @@ const speedtest = async (msg: MessageContext) => {
         }
 
         await msg.edit({
-          text: html(`❌ <b>速度测试失败</b>\n\n<code>${htmlEscape(errorMsg)}</code>${helpText}`)});
+          text: html(`❌ <b>速度测试失败</b><br><br><code>${htmlEscape(errorMsg)}</code>${helpText}`)});
       }
     } else {
       await msg.edit({
-        text: html(`❌ <b>参数错误</b>\n\n${help_txt}`)});
+        text: html(`❌ <b>参数错误</b><br><br>${help_txt}`)});
     }
   } catch (error: any) {
     console.error("SpeedNext plugin error:", error);
@@ -1438,7 +1438,7 @@ const speedtest = async (msg: MessageContext) => {
         ? errorMessage.substring(0, 100) + "..."
         : errorMessage;
     await msg.edit({
-      text: html(`❌ <b>插件错误</b>\n\n<b>错误信息:</b> <code>${htmlEscape(
+      text: html(`❌ <b>插件错误</b><br><br><b>错误信息:</b> <code>${htmlEscape(
         displayError
       )}</code>\n\n💡 <b>建议:</b> 请检查网络连接或联系管理员`)});
   }

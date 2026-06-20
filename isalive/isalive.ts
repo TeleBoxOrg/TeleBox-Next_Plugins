@@ -348,7 +348,7 @@ class IsAlivePlugin extends Plugin {
 
         if (!input) {
           await msg.edit({
-            text: html(`Missing parameter.\n\n${help_text}`),
+            text: html(`Missing parameter.<br><br>${help_text}`),
           });
           return;
         }

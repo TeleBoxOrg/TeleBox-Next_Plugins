@@ -1290,7 +1290,7 @@ const dme = async (msg: MessageContext) => {
       const countArg = args[1];
       if (!countArg) {
         await msg.edit({
-          text: html(`❌ <b>参数错误:</b> 请指定删除数量\n\n💡 使用 <code>${mainPrefix}dme -f [数量]</code>`),
+          text: html(`❌ <b>参数错误:</b> 请指定删除数量<br><br>💡 使用 <code>${mainPrefix}dme -f [数量]</code>`),
         });
         return;
       }

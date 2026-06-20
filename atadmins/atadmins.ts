@@ -121,7 +121,7 @@ class AtAdminsPlugin extends Plugin {
       const chat = await msg.getCompleteChat();
       if (!chat || !((chat as any)._ === 'channel' || (chat as any)._ === 'chat')) {
         await msg.edit({ 
-          text: html(`❌ <b>此命令只能在群组中使用</b>\n\n💡 请在群组中使用 <code>${mainPrefix}atadmins</code> 命令`), 
+          text: html(`❌ <b>此命令只能在群组中使用</b><br><br>💡 请在群组中使用 <code>${mainPrefix}atadmins</code> 命令`), 
         });
         return;
       }
@@ -162,7 +162,7 @@ class AtAdminsPlugin extends Plugin {
 
       if (admins.length === 0) {
         await msg.edit({ 
-          text: html(`❌ <b>未找到可召唤的管理员</b>\n\n📊 统计信息:\n• 总管理员: ${adminCount}\n• 机器人管理员: ${botCount}\n• 可召唤: 0\n\n💡 可能原因：所有管理员都是机器人或已删除账户`), 
+          text: html(`❌ <b>未找到可召唤的管理员</b><br><br>📊 统计信息:<br>• 总管理员: ${adminCount}<br>• 机器人管理员: ${botCount}<br>• 可召唤: 0<br><br>💡 可能原因：所有管理员都是机器人或已删除账户`), 
         });
         return;
       }

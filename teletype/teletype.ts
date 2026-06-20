@@ -118,7 +118,7 @@ class TeletypePlugin extends Plugin {
   
   private async showUsage(msg: MessageContext): Promise<void> {
     await msg.edit({
-      text: html(`❌ <b>参数错误</b>\n\n${this.HELP_TEXT}`)
+      text: html(`❌ <b>参数错误</b><br><br>${this.HELP_TEXT}`)
     });
   }
   
@@ -172,7 +172,7 @@ class TeletypePlugin extends Plugin {
     const status = isEnabled ? "🟢 开启" : "🔴 关闭";
     
     await msg.edit({
-      text: html(`📊 <b>状态</b>\n\n自动模式: ${status}`)
+      text: html(`📊 <b>状态</b><br><br>自动模式: ${status}`)
     });
   }
   

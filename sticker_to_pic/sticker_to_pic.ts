@@ -209,7 +209,7 @@ class StickerToPicPlugin extends Plugin {
             const version = execSync('convert -version', { encoding: 'utf8' });
             const versionLine = version.split('\n')[0];
             await msg.edit({
-              text: html(`✅ <b>ImageMagick状态正常</b>\n\n<b>版本信息:</b>\n<code>${htmlEscape(versionLine)}</code>\n\n🎯 <b>功能状态:</b> 可正常使用贴纸转换功能`)
+              text: html(`✅ <b>ImageMagick状态正常</b><br><br><b>版本信息:</b><br><code>${htmlEscape(versionLine)}</code><br><br>🎯 <b>功能状态:</b> 可正常使用贴纸转换功能`)
             });
           } catch (error) {
             await msg.edit({
@@ -226,7 +226,7 @@ class StickerToPicPlugin extends Plugin {
               const version = execSync('convert -version', { encoding: 'utf8' });
               const versionLine = version.split('\n')[0];
               await msg.edit({
-                text: html(`🎉 <b>ImageMagick自动安装成功！</b>\n\n<b>版本信息:</b>\n<code>${htmlEscape(versionLine)}</code>\n\n✅ <b>状态:</b> 现在可以正常使用贴纸转换功能`)
+                text: html(`🎉 <b>ImageMagick自动安装成功！</b><br><br><b>版本信息:</b><br><code>${htmlEscape(versionLine)}</code><br><br>✅ <b>状态:</b> 现在可以正常使用贴纸转换功能`)
               });
             } catch (versionError) {
               await msg.edit({
@@ -253,7 +253,7 @@ class StickerToPicPlugin extends Plugin {
             }
             
             await msg.edit({
-              text: html(`❌ <b>ImageMagick自动安装失败</b>\n\n<b>检测到系统:</b> ${platformName}\n<b>手动安装命令:</b>\n<code>${htmlEscape(installCmd)}</code>`)
+              text: html(`❌ <b>ImageMagick自动安装失败</b><br><br><b>检测到系统:</b> ${platformName}<br><b>手动安装命令:</b><br><code>${htmlEscape(installCmd)}</code>`)
             });
           }
         }
@@ -280,7 +280,7 @@ class StickerToPicPlugin extends Plugin {
       } else {
         // 未知子命令，提示错误
         await msg.edit({
-          text: html(`❌ <b>未知子命令:</b> <code>${htmlEscape(sub)}</code>\n\n请使用 <code>${mainPrefix}stp help</code> 查看可用选项`)
+          text: html(`❌ <b>未知子命令:</b> <code>${htmlEscape(sub)}</code><br><br>请使用 <code>${mainPrefix}stp help</code> 查看可用选项`)
         });
         return;
       }
@@ -387,7 +387,7 @@ class StickerToPicPlugin extends Plugin {
             }
             
             await msg.edit({
-              text: html(`❌ <b>ImageMagick自动安装失败</b>\n\n<b>请手动安装:</b>\n<code>${htmlEscape(installCmd)}</code>`)
+              text: html(`❌ <b>ImageMagick自动安装失败</b><br><br><b>请手动安装:</b><br><code>${htmlEscape(installCmd)}</code>`)
             });
             return;
           }
@@ -421,7 +421,7 @@ class StickerToPicPlugin extends Plugin {
         } catch (convertError: any) {
           console.error('[sticker_to_pic] ImageMagick转换失败:', convertError);
           await msg.edit({
-            text: html(`❌ <b>贴纸转换失败</b>\n\n<b>错误详情:</b> ${htmlEscape(convertError.message)}\n\n💡 请确保贴纸格式正确`)
+            text: html(`❌ <b>贴纸转换失败</b><br><br><b>错误详情:</b> ${htmlEscape(convertError.message)}<br><br>💡 请确保贴纸格式正确`)
           });
           return;
         }

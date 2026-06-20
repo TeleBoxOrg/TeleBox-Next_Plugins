@@ -662,7 +662,7 @@ class RatePlugin extends Plugin {
       const currency1 = await this.searchCurrency(input1!);
       if (!currency1) {
         await msg.edit({
-          text: html(`❌ <b>货币未找到:</b> "${htmlEscape(input1!)}"\n\n💡 请检查拼写或使用标准代码\n\n🔎 <b>谷歌兜底:</b> <a href="${googleUrlFallback}">点击查看</a>`),
+          text: html(`❌ <b>货币未找到:</b> "${htmlEscape(input1!)}"<br><br>💡 请检查拼写或使用标准代码<br><br>🔎 <b>谷歌兜底:</b> <a href="${googleUrlFallback}">点击查看</a>`),
         });
         return;
       }
@@ -672,7 +672,7 @@ class RatePlugin extends Plugin {
         const searchResult = await this.searchCurrency(input2);
         if (!searchResult) {
           await msg.edit({
-            text: html(`❌ <b>货币未找到:</b> "${htmlEscape(input2)}"\n\n💡 请检查拼写或使用标准代码\n\n🔎 <b>谷歌兜底:</b> <a href="${googleUrlFallback}">点击查看</a>`),
+            text: html(`❌ <b>货币未找到:</b> "${htmlEscape(input2)}"<br><br>💡 请检查拼写或使用标准代码<br><br>🔎 <b>谷歌兜底:</b> <a href="${googleUrlFallback}">点击查看</a>`),
           });
           return;
         }
@@ -705,7 +705,7 @@ class RatePlugin extends Plugin {
       } catch (error: any) {
         console.error(`[RatePlugin] 价格获取详细错误:`, error);
         await msg.edit({
-          text: html(`❌ <b>获取价格失败:</b> ${htmlEscape(error.message)}\n\n🔍 <b>调试信息:</b>\n• ${htmlEscape(currency1.symbol)} (${htmlEscape(currency1.type)})\n• ${htmlEscape(currency2.symbol)} (${htmlEscape(currency2.type)})`),
+          text: html(`❌ <b>获取价格失败:</b> ${htmlEscape(error.message)}<br><br>🔍 <b>调试信息:</b><br>• ${htmlEscape(currency1.symbol)} (${htmlEscape(currency1.type)})<br>• ${htmlEscape(currency2.symbol)} (${htmlEscape(currency2.type)})`),
         });
         return;
       }

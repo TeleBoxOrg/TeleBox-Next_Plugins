@@ -150,7 +150,7 @@ class AffPlugin extends Plugin {
 
       // 无效参数
       await msg.edit({
-        text: html(`❌ <b>无效的参数</b>\n\n` +
+        text: html(`❌ <b>无效的参数</b><br><br>` +
               `💡 使用方法：\n` +
               `• <code>${mainPrefix}aff</code> - 发送/列表\n` +
               `• <code>${mainPrefix}aff &lt;序号&gt;</code> - 发送指定条目\n` +
@@ -249,7 +249,7 @@ class AffPlugin extends Plugin {
     
     if (!text.trim()) {
       await msg.edit({
-        text: html(`❌ <b>回复的消息内容为空</b>\n\n` +
+        text: html(`❌ <b>回复的消息内容为空</b><br><br>` +
               `💡 请回复一条包含aff信息的消息`),
       });
       return;

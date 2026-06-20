@@ -66,7 +66,7 @@ async function sendLongMessage(client: any, msg: MessageContext, htmlContent: st
     await client.sendText(msg.chat.id, html(first), { replyTo: msg.id });
   }
   for (let i = 1; i < parts.length; i++) {
-    await client.sendText(msg.chat.id, html(`${parts[i]}\n\n📄 (${i + 1}/${parts.length})`), { replyTo: msg.id });
+    await client.sendText(msg.chat.id, html(`${parts[i]}<br><br>📄 (${i + 1}/${parts.length})`), { replyTo: msg.id });
   }
 }
 
@@ -369,7 +369,7 @@ class JavDBPlugin extends Plugin {
       // 处理 Telegram API 频率限制
       if (m.includes("FLOOD_WAIT")) {
         const wait = parseInt(m.match(/\d+/)?.[0] || "60", 10);
-        await msg.edit({ text: html(`⏳ <b>请求过于频繁</b>\n\n需要等待 ${wait} 秒后重试`) });
+        await msg.edit({ text: html(`⏳ <b>请求过于频繁</b><br><br>需要等待 ${wait} 秒后重试`) });
         return;
       }
       

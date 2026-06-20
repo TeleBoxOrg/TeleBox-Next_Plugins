@@ -884,7 +884,7 @@ class WarpPlugin extends Plugin {
         case "port": {
           const p = parseInt(args[1] || "", 10);
           if (!p) {
-            await msg.edit({ text: html(`❌ 请提供端口号\n\n用法: <code>${htmlEscape(mainPrefix)}warp port 40000</code>`) });
+            await msg.edit({ text: html(`❌ 请提供端口号<br><br>用法: <code>${htmlEscape(mainPrefix)}warp port 40000</code>`) });
             return;
           }
           await msg.edit({ text: html(`🔄 正在修改端口为 ${p}...`) });
@@ -971,7 +971,7 @@ class WarpPlugin extends Plugin {
       // 处理特定错误类型
       if (error.message?.includes("FLOOD_WAIT")) {
         const waitTime = parseInt(error.message.match(/\d+/)?.[0] || "60");
-        await msg.edit({ text: html(`⏳ <b>请求过于频繁</b>\n\n需要等待 ${waitTime} 秒后重试`) });
+        await msg.edit({ text: html(`⏳ <b>请求过于频繁</b><br><br>需要等待 ${waitTime} 秒后重试`) });
         return;
       }
       

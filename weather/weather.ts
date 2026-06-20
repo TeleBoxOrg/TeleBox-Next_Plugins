@@ -181,7 +181,7 @@ class WeatherPlugin extends Plugin {
       
       // 渐进式状态反馈
       await msg.edit({
-        text: html(`🔍 <b>正在识别城市...</b>\n<i>${htmlEscape(originalCityInput)}</i>`)
+        text: html(`🔍 <b>正在识别城市...</b><br><i>${htmlEscape(originalCityInput)}</i>`)
       });
 
       // 自动检测并转换中文
@@ -190,7 +190,7 @@ class WeatherPlugin extends Plugin {
       // 如果进行了翻译，显示翻译结果
       if (cityName !== originalCityInput) {
         await msg.edit({
-          text: html(`🌍 <b>正在搜索...</b>\n<i>${htmlEscape(originalCityInput)} → ${htmlEscape(cityName)}</i>`)
+          text: html(`🌍 <b>正在搜索...</b><br><i>${htmlEscape(originalCityInput)} → ${htmlEscape(cityName)}</i>`)
         });
       } else {
         await msg.edit({
@@ -214,7 +214,7 @@ class WeatherPlugin extends Plugin {
 
       if (!geoResponse.data.results || geoResponse.data.results.length === 0) {
         await msg.edit({
-          text: html(`❌ <b>城市未找到</b>\n\n无法找到城市: <code>${htmlEscape(originalCityInput)}</code>\n\n<b>💡 建议:</b>\n• 检查城市名拼写\n• 尝试使用英文名称\n• 尝试添加国家名，如: Beijing China\n\n<b>示例:</b>\n• <code>${mainPrefix}weather beijing</code>\n• <code>${mainPrefix}weather 上海</code>\n• <code>${mainPrefix}weather London</code>`)
+          text: html(`❌ <b>城市未找到</b><br><br>无法找到城市: <code>${htmlEscape(originalCityInput)}</code><br><br><b>💡 建议:</b><br>• 检查城市名拼写<br>• 尝试使用英文名称<br>• 尝试添加国家名，如: Beijing China<br><br><b>示例:</b><br>• <code>${mainPrefix}weather beijing</code><br>• <code>${mainPrefix}weather 上海</code><br>• <code>${mainPrefix}weather London</code>`)
         });
         return;
       }
@@ -281,13 +281,13 @@ class WeatherPlugin extends Plugin {
       // 检查是否为超时错误
       if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
         await msg.edit({
-          text: html(`❌ <b>请求超时</b>\n\n网络连接缓慢，请稍后重试`)
+          text: html(`❌ <b>请求超时</b><br><br>网络连接缓慢，请稍后重试`)
         });
         return;
       }
       
       await msg.edit({
-        text: html(`❌ <b>查询失败</b>\n\n${htmlEscape(error.message || '未知错误')}\n\n请检查网络连接或稍后重试`)
+        text: html(`❌ <b>查询失败</b><br><br>${htmlEscape(error.message || '未知错误')}<br><br>请检查网络连接或稍后重试`)
       });
     }
   }

@@ -106,7 +106,7 @@ class GifConverter {
     } catch (error: any) {
       console.error("GIF转贴纸失败:", error);
       await msg.edit({
-        text: html(`❌ 转换失败：${error.message}\n\n💡 请检查支持的格式和限制。`)
+        text: html(`❌ 转换失败：${error.message}<br><br>💡 请检查支持的格式和限制。`)
       });
     }
   }
@@ -372,7 +372,7 @@ class GifConverter {
     } catch (error: any) {
       console.error("自动添加贴纸包失败:", error);
       await statusMsg.edit({ 
-        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...\n\n错误: ${error.message}`) 
+        text: html(`⚠️ 自动添加失败，正在直接发送贴纸...<br><br>错误: ${error.message}`) 
       });
       
       // 失败后直接发送贴纸
