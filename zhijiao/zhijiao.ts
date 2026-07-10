@@ -2,6 +2,7 @@ import { getPrefixes } from "@utils/pluginManager";
 import { Plugin } from "@utils/pluginBase";
 import type { MessageContext } from "@mtcute/dispatcher";
 import { html } from "@mtcute/html-parser";
+import { htmlEscape } from "@utils/htmlEscape";
 import { randomInt } from "crypto";
 import { sleep } from "@utils/asyncHelpers";
 
@@ -56,61 +57,12 @@ const JIACI_MAP: Record<string, string> = {
   阴阳阴: "阴阳阴：秋叶无颜色，凋零一夜风。晨鸡醒午梦，心事总成空。梦难成真。",
 };
 
-function htmlEscape(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
-
 function pickRandomToss(): TossResult {
   const index = randomInt(TOSS_OPTIONS.length);
   return TOSS_OPTIONS[index];
 }
 
 function getInterpretation(text: string): string {
-  const positiveKeywords = [
-    "大吉",
-    "上上",
-    "吉",
-    "如意",
-    "利",
-    "顺",
-    "亨",
-    "昌",
-    "喜",
-    "圆",
-    "安",
-  ];
-  const cautionKeywords = [
-    "凶",
-    "危",
-    "险",
-    "难",
-    "阻",
-    "忧",
-    "恐",
-    "不利",
-    "暂停",
-    "枯",
-  ];
-  const waitingKeywords = ["待", "守", "缓", "机", "迟", "静"];
-
-  const positiveScore = positiveKeywords.reduce(
-    (score, keyword) => (text.includes(keyword) ? score + 1 : score),
-    0
-  );
-  const cautionScore = cautionKeywords.reduce(
-    (score, keyword) => (text.includes(keyword) ? score + 1 : score),
-    0
-  );
-  const waitingScore = waitingKeywords.reduce(
-    (score, keyword) => (text.includes(keyword) ? score + 1 : score),
-    0
-  );
-
   const afterColon = text.split("：")[1] ?? text;
   const firstPhrase = afterColon.split(/，|。/)[0]?.trim() || afterColon.trim();
 
@@ -141,7 +93,7 @@ function formatTossLine(index: number, toss?: TossResult): string {
 }
 
 class ZhijiaoPlugin extends Plugin {
-  description: string = `<br>掷筊<br>强随机 使用 笅杯卦辞廿七句<br>${help_text}`;
+  description: string = `掷筊<br>强随机 使用 笅杯卦辞廿七句<br>${help_text}`;
   cmdHandlers: Record<
     string,
     (msg: MessageContext, trigger?: MessageContext) => Promise<void>
