@@ -427,6 +427,8 @@ class MusicHubPlugin extends Plugin {
   description: string = `Music Hub 多音源音乐搜索和下载<br><br>${helpText}`;
   private db?: Awaited<ReturnType<typeof JSONFilePreset<MusicHubConfig>>>;
   private sessions = new Map<string, SearchSession>();
+  // 活跃传输进度定时器，cleanup() 时统一清空，防止插件重载时泄漏 setInterval
+  private activeTransferTimers = new Set<ReturnType<typeof setInterval>>();
 
   cmdHandlers = {
     mh: this.handleCommand.bind(this),
@@ -434,6 +436,10 @@ class MusicHubPlugin extends Plugin {
   };
 
   cleanup(): void {
+    for (const timer of this.activeTransferTimers) {
+      clearInterval(timer);
+    }
+    this.activeTransferTimers.clear();
     this.sessions.clear();
     this.db = undefined;
   }
@@ -831,6 +837,7 @@ class MusicHubPlugin extends Plugin {
       timer = setInterval(() => {
         void sendLatest(false);
       }, PROGRESS_UPDATE_INTERVAL_MS);
+      this.activeTransferTimers.add(timer);
     };
 
     return {
@@ -842,6 +849,7 @@ class MusicHubPlugin extends Plugin {
       stop: async () => {
         if (timer) {
           clearInterval(timer);
+          this.activeTransferTimers.delete(timer);
           timer = undefined;
         }
         await sendLatest(true);
