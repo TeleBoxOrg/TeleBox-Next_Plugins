@@ -557,7 +557,7 @@ class YvluPlugin extends Plugin {
   > = {
     yvlu: async (msg: any, trigger?: any) => {
       const start = Date.now();
-      const args = (msg.text || msg.message || "").split(/\s+/);
+      const args = (msg.text || "").split(/\s+/);
       let count = 1;
       let r = false;
       let valid = false;

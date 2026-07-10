@@ -3,7 +3,6 @@ import { sleep } from "@utils/asyncHelpers";
 import { htmlEscape } from "@utils/htmlEscape";
 import { getGlobalClient } from "@utils/globalClient";
 import { getPrefixes } from "@utils/pluginManager";
-import { safeGetMessages } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
 import { getErrorMessage } from "@utils/errorHelpers";
 import type { ClientInternals } from "@utils/clientInternals";
@@ -101,7 +100,7 @@ class DbdjPlugin extends Plugin {
       };
 
       try {
-        const parts = (msg.message || "").trim().split(/\s+/);
+        const parts = (msg.text || "").trim().split(/\s+/);
         // 期望格式: .dbdj 消息数 人数 文案...
         const countStr = parts[1];
         const pickStr = parts[2];
@@ -124,12 +123,16 @@ class DbdjPlugin extends Plugin {
 
         const client = msg.client! as unknown as import("@mtcute/node").TelegramClient;
         const offsetId = (msg.id || 1) - 1; // 从命令消息之前开始
-        const messages = await safeGetMessages(client, msg.peerId as unknown as import("@mtcute/core").InputPeerLike, {
-          ids: [] as number[],
-          ...{ offsetId, limit: scanCount },
-        } as unknown as Parameters<typeof safeGetMessages>[2]);
+        // mtcute 原生 getHistory 分页；safeGetMessages 的 { ids } 形状无法按 offset/limit 扫描
+        const offsetDate = msg.date instanceof Date
+          ? Math.floor(msg.date.getTime() / 1000)
+          : 0;
+        const messages = (await client.getHistory(msg.chat.id, {
+          limit: scanCount,
+          offset: { id: offsetId, date: offsetDate },
+        })) as unknown as Array<{ sender?: { id?: number; className?: string; type?: string } }>;
 
-        // 收集有效用户: 仅统计来自用户的消息, 排除自身(out)、无 fromId 的消息
+        // 收集有效用户: 仅统计来自用户的消息, 排除自身(out)、无 sender 的消息
         const uniqueUserIds: number[] = [];
         const seen = new Set<number>();
         const filtered = new Set<number>();
@@ -139,8 +142,8 @@ class DbdjPlugin extends Plugin {
         for (const m of messages) {
           // 跳过自己发送的消息
           // if ((m as any).out) continue;
-          const from = (m as { fromId?: { userId?: number } }).fromId;
-          const uid = from?.userId ? Number(from.userId) : undefined;
+          const sender = m.sender;
+          const uid = typeof sender?.id === "number" ? sender.id : undefined;
           if (!uid || !Number.isFinite(uid)) continue;
 
           if (!seen.has(uid) && !filtered.has(uid)) {
