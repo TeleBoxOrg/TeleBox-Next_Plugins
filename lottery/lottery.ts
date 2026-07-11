@@ -908,7 +908,7 @@ async function handleEnhancedLotteryJoin(msg: MessageContext): Promise<void> {
         pendingTimers.delete(t1);
         if (getCurrentGeneration() !== gen1) return;
         try {
-          await replyMsg.delete();
+          await msg.client.deleteMessagesById(replyMsg.chat.id, [replyMsg.id]);
           await msg.delete();
         } catch (error: unknown) {
           logger.warn("Failed to delete duplicate participation messages:", error);
@@ -963,7 +963,7 @@ async function handleEnhancedLotteryJoin(msg: MessageContext): Promise<void> {
       pendingTimers.delete(t2);
       if (getCurrentGeneration() !== gen2) return;
       try {
-        await replyMsg.delete();
+        await msg.client.deleteMessagesById(replyMsg.chat.id, [replyMsg.id]);
         await msg.delete();
       } catch (error: unknown) {
         logger.warn("Failed to delete participation messages:", error);
