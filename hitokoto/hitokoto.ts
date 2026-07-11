@@ -78,7 +78,7 @@ class HitokotoPlugin extends Plugin {
       
       if (subCommand === "help" || subCommand === "h") {
         await msg.edit({
-          text: html`${help_text}`
+          text: html(help_text)
         });
         return;
       }
@@ -168,7 +168,7 @@ class HitokotoPlugin extends Plugin {
 
     // 编辑消息显示结果
     await msg.edit({
-      text: html`${finalText}`
+      text: html(finalText)
     });
   }
 

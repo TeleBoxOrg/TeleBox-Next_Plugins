@@ -214,7 +214,7 @@ class CalcPlugin extends Plugin {
 
       if (!args.length) {
         await msg.edit({
-          text: html`${help_text}`,
+          text: html(help_text),
           disableWebPreview: true,
         });
         return;

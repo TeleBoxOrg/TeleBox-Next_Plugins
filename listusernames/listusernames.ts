@@ -97,15 +97,15 @@ class ListUsernamesPlugin extends Plugin {
         if (output.length > 4096) {
           // 如果消息过长，分割发送第一部分
           const part1 = output.substring(0, 4000) + "<br><br>... (消息过长，已截断)";
-          await msg.edit({ text: html`${part1}` });
+          await msg.edit({ text: html(part1) });
           
           // 发送剩余部分作为新消息
           const part2 = output.substring(4000);
           if (part2.length > 0) {
-            await client.sendText(msg.chat.id, html`${part2}`);
+            await client.sendText(msg.chat.id, html(part2));
           }
         } else {
-          await msg.edit({ text: html`${output}` });
+          await msg.edit({ text: html(output) });
         }
 
       } catch (error: unknown) {
@@ -126,7 +126,7 @@ class ListUsernamesPlugin extends Plugin {
         }
 
         await msg.edit({
-          text: html`${errorMessage}`
+          text: html(errorMessage)
         });
       }
     }

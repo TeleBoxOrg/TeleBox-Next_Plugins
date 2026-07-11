@@ -135,7 +135,7 @@ class PicToStickerPlugin extends Plugin {
     try {
       // 处理帮助命令
       if (sub === "help" || sub === "h") {
-        await msg.edit({ text: html`${this.help_text}` });
+        await msg.edit({ text: html(this.help_text) });
         return;
       }
 
@@ -180,7 +180,7 @@ class PicToStickerPlugin extends Plugin {
           `<b>压缩等级:</b> ${this.config.compressionLevel}\n\n` +
           `💡 使用 <code>${mainPrefix}pts config [选项] [值]</code> 修改配置`;
         
-        await msg.edit({ text: html`${configDisplay}` });
+        await msg.edit({ text: html(configDisplay) });
         return;
       }
 
@@ -329,7 +329,7 @@ class PicToStickerPlugin extends Plugin {
         ? `✅ <b>批量转换完成</b>\n\n成功: ${processedCount} 张\n失败: ${failedCount} 张`
         : `❌ 未找到可转换的图片`;
 
-      await msg.edit({ text: html`${resultMessage}` });
+      await msg.edit({ text: html(resultMessage) });
 
       if (this.config.autoDelete && processedCount > 0) {
         await sleep(3000);
@@ -410,7 +410,7 @@ class PicToStickerPlugin extends Plugin {
         errorMsg = `❌ <b>请求过于频繁</b>\n\n请等待 ${waitTime} 秒后重试`;
       }
       
-      await msg.edit({ text: html`${errorMsg}` });
+      await msg.edit({ text: html(errorMsg) });
     }
   }
 

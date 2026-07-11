@@ -50,13 +50,13 @@ class SoutuPlugin extends Plugin {
 
         // help 在前：.soutu help
         if (sub === "help" || sub === "h") {
-          await msg.edit({ text: html`${help_text}` });
+          await msg.edit({ text: html(help_text) });
           return;
         }
 
         // help 在后：.soutu [sub] help
         if (args[1] && (args[1].toLowerCase() === "help" || args[1].toLowerCase() === "h")) {
-          await msg.edit({ text: html`${help_text}` });
+          await msg.edit({ text: html(help_text) });
           return;
         }
 

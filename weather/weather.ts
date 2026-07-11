@@ -72,7 +72,7 @@ class WeatherPlugin extends Plugin {
 
   async handleWeather(msg: MessageContext, args: string[]): Promise<void> {
     try {
-      await msg.replyText(html`${help_text}`);
+      await msg.replyText(html(help_text));
     } catch (error: unknown) {
       logger.error("[weather] 处理失败:", error);
     }

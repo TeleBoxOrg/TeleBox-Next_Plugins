@@ -641,20 +641,20 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
       await msg.edit({ text: html`🔄 获取服务器信息中...` });
      const result = TelegramFormatter.markdownToHtml(await getServerInfo(baseUrl));
       await msg.edit({
-        text: html`${result}`,
+        text: html(result),
       });
     } else if (args[0] === "total") {
       await msg.edit({ text: html`🔄 获取节点总览中...` });
      const result = TelegramFormatter.markdownToHtml(await getNodesOverview(baseUrl));
       await msg.edit({
-        text: html`${result}`,
+        text: html(result),
       });
     } else if (args[0] === "show" && args.length >= 2) {
       const nodeName = args.slice(1).join(" ");
       await msg.edit({ text: html`🔄 获取节点 "${htmlEscape(nodeName)}" 信息中...` });
      const result = TelegramFormatter.markdownToHtml(await getNodeDetails(baseUrl, nodeName));
       await msg.edit({
-        text: html`${result}`,
+        text: html(result),
       });
     } else {
       await msg.edit({
@@ -671,7 +671,7 @@ async function handleKomariRequest(msg: MessageContext): Promise<void> {
     logger.error("Komari处理错误:", error);
 
     const errorMsg = `❌ 错误：${getErrorMessage(error)}`;
-    await msg.edit({ text: html`${errorMsg}` });
+    await msg.edit({ text: html(errorMsg) });
 
     setTimeout(() => {
       msg.delete().catch(() => { /* msg may already be deleted */ });

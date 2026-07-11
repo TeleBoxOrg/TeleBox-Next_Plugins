@@ -197,7 +197,7 @@ class EpicPlugin extends Plugin {
       const sub = (parts[1] || "").toLowerCase();
 
       if (sub === "help" || sub === "h") {
-        await msg.edit({ text: html`${help_text}` });
+        await msg.edit({ text: html(help_text) });
         return;
       }
 
@@ -220,7 +220,7 @@ class EpicPlugin extends Plugin {
           upcoming.forEach((g, i) => (text += buildGameText(g, i + 1) + "<br><br>"));
         }
 
-        await msg.edit({ text: html`${text}`, disableWebPreview: true });
+        await msg.edit({ text: html(text), disableWebPreview: true });
       } catch (error: unknown) {
         logger.error("[epic] 获取失败:", error);
         await msg.edit({ text: html`❌ <b>获取失败:</b> ${htmlEscape(getErrorMessage(error) || "网络错误")}` });
