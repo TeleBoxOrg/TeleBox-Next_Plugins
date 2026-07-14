@@ -161,9 +161,16 @@ async function formatEntity(
   let id: number | undefined;
   let entity: Chat | User | { id?: number; title?: string; firstName?: string; lastName?: string; username?: string } | undefined;
   try {
-    entity = (target && typeof target === 'object' && '_' in target)
-      ? target as unknown as Chat | User
-      : (await client?.getChat(target as string | number) as Chat | User);
+    if (target && typeof target === "object" && "_" in target) {
+      entity = target as unknown as Chat | User;
+    } else {
+      // mtcute treats pure-digit strings as usernames; numeric IDs must be numbers
+      let peer: string | number = target as string | number;
+      if (typeof peer === "string" && /^-?\d+$/.test(peer.trim())) {
+        peer = Number(peer);
+      }
+      entity = (await client.getChat(peer)) as Chat | User;
+    }
     if (!entity) throw new Error("无法获取 entity");
     id = entity.id;
     if (!id) throw new Error("无法获取 entity id");
