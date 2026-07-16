@@ -7,7 +7,7 @@ import type { TelegramClient } from "@mtcute/core/highlevel/client.js";
 import { thtml as html } from "@mtcute/html-parser";
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { execSync, execFileSync } from "child_process";
 import * as os from "os";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 import { logger } from "@utils/logger";
@@ -376,19 +376,19 @@ class StickerToPicPlugin extends Plugin {
 
 
         try {
-          let convertCmd: string;
-          
+          let convertArgs: string[];
+
           if (outputFormat === 'png') {
             if (keepTransparency) {
-              convertCmd = `convert "${stickerPath}" "${outputPath}"`;
+              convertArgs = [stickerPath, outputPath];
             } else {
-              convertCmd = `convert "${stickerPath}" -background white -alpha remove "${outputPath}"`;
+              convertArgs = [stickerPath, "-background", "white", "-alpha", "remove", outputPath];
             }
           } else {
-            convertCmd = `convert "${stickerPath}" -background white -alpha remove -alpha off "${outputPath}"`;
+            convertArgs = [stickerPath, "-background", "white", "-alpha", "remove", "-alpha", "off", outputPath];
           }
-          
-          execSync(convertCmd, { stdio: 'ignore' });
+
+          execFileSync("convert", convertArgs, { stdio: 'ignore' });
           
           if (!fs.existsSync(outputPath)) {
             throw new Error('转换失败：输出文件未生成');
