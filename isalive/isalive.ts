@@ -64,7 +64,12 @@ async function formatEntity(
     if (getRawType(target)) {
       entity = target as Chat | User;
     } else {
-      entity = await client.getChat(target as string | number);
+      // mtcute treats pure-digit strings as usernames; numeric IDs must be numbers
+      let peer: string | number = target as string | number;
+      if (typeof peer === "string" && /^-?\d+$/.test(peer.trim())) {
+        peer = Number(peer);
+      }
+      entity = await client.getChat(peer);
     }
     if (!entity) throw new Error("无法获取 entity");
     id = getUserId(entity);
@@ -353,7 +358,7 @@ async function findUserFromGroups(
 
 class IsAlivePlugin extends Plugin {
 
-  description: string = `\\nisalive\\n\\n${help_text}`;
+  description: string = `\nisalive\n\n${help_text}`;
   cmdHandlers: Record<
     string,
     (msg: MessageContext, trigger?: MessageContext) => Promise<void>
