@@ -103,7 +103,7 @@ TeleBox-Next-Plugins 是 [TeleBox-Next](https://github.com/TeleBoxOrg/TeleBox-Ne
 - `portball` - 临时禁言  
 - `premium` - 群组大会员统计  
 - `qr` - QR 二维码  
-- `quote` - 引用贴纸生成（本地 glass：语音/文件/音频行、视频角标、stories/image）  
+- `quote` - 引用贴纸生成（本地 glass：语音/文件/音频行、视频角标、stories/image；.q help）  
 - `rate` - 货币实时汇率查询与计算  
 - `restore_pin` - 恢复群组被取消的置顶消息  
 - `rev` - 反转你的消息  
