@@ -9,6 +9,7 @@ import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import path from "path";
 import bigInt from "big-integer";
+import LongJs from "long";
 import { safeGetReplyMessage } from "@utils/safeGetMessages";
 
 import { safeGetMe } from "@utils/authGuards";
@@ -30,6 +31,41 @@ function chatIdOf(msg: any): number {
   if (chat && typeof chat.id !== "undefined") return Number(chat.id);
   return 0;
 }
+
+/**
+ * mtcute TL long() 序列化要求 { low, high }（long.js），
+ * big-integer 没有 low/high，直接塞进去会写出错误 accessHash → CHANNEL_INVALID。
+ */
+function toMtcuteLong(value: string | number | bigint | { low?: number; high?: number; toString?: () => string } | null | undefined): Long {
+  if (value == null) return LongJs.ZERO as unknown as Long;
+  if (typeof value === "object" && typeof (value as { low?: unknown }).low === "number" && typeof (value as { high?: unknown }).high === "number") {
+    return value as unknown as Long;
+  }
+  const s = typeof value === "bigint" ? value.toString() : String(value);
+  try {
+    return LongJs.fromString(s) as unknown as Long;
+  } catch {
+    return LongJs.fromValue(s as unknown as number) as unknown as Long;
+  }
+}
+
+/** Build inputChannel with correct Long accessHash (never big-integer). */
+function makeInputChannel(channelId: number | string, accessHash: string | number | bigint | Long): tl.TypeInputChannel {
+  return {
+    _: "inputChannel",
+    channelId: typeof channelId === "number" ? channelId : Number(channelId),
+    accessHash: toMtcuteLong(accessHash as string | number),
+  } as tl.TypeInputChannel;
+}
+
+/** Prefer marked id (-100…) for mtcute resolvePeer. */
+function toMarkedChannelId(rawOrMarked: number): number {
+  if (!Number.isFinite(rawOrMarked)) return rawOrMarked;
+  if (rawOrMarked < 0) return rawOrMarked; // already marked or basic negative
+  // positive raw channel id → marked
+  return Number(`-100${rawOrMarked}`);
+}
+
 
 /**
  * Chat identifier type used across PermissionManager and BanManager.
@@ -441,7 +477,7 @@ class UserResolver {
         try {
           const users = await client.call({
             _: 'users.getUsers',
-            id: [{ _: 'inputUser', userId, accessHash: (peer.accessHash || 0 as unknown as Long) }],
+            id: [{ _: 'inputUser', userId, accessHash: toMtcuteLong((peer.accessHash as string | number | undefined) ?? 0) }],
           }) as unknown as Array<Record<string, unknown>>;
           if (Array.isArray(users) && users.length > 0 && (users[0] as { _?: string })._ !== 'userEmpty') {
             return users[0] as PartialEntity;
@@ -570,7 +606,7 @@ class UserResolver {
           return {
             _: "inputPeerUser",
             userId,
-            accessHash: matched.accessHash as unknown as Long,
+            accessHash: toMtcuteLong(matched.accessHash as string | number),
           } as tl.TypeInputPeer;
         }
       } catch (e: unknown) {
@@ -601,7 +637,7 @@ class UserResolver {
         participant: {
           _: "inputPeerUser",
           userId,
-          accessHash: 0 as unknown as Long,
+          accessHash: toMtcuteLong(0),
         },
       } as Parameters<typeof client.call>[0]) as {
         users?: Array<{
@@ -618,7 +654,7 @@ class UserResolver {
         return {
           _: "inputPeerUser",
           userId,
-          accessHash: matched.accessHash as unknown as Long,
+          accessHash: toMtcuteLong(matched.accessHash as string | number),
         } as tl.TypeInputPeer;
       }
     } catch (e: unknown) {
@@ -680,7 +716,7 @@ class UserResolver {
               return {
                 _: "inputPeerUser",
                 userId,
-                accessHash: ah as unknown as Long,
+                accessHash: toMtcuteLong(ah as string | number),
               } as tl.TypeInputPeer;
             }
             const input = await this.safeGetInputEntity(client, matchedUser);
@@ -810,28 +846,23 @@ async function resolveChannelInput(
   client: TelegramClient,
   group: ManagedGroup
 ): Promise<tl.TypeInputChannel | number> {
-  if (group.kind !== 'channel') {
+  if (group.kind !== "channel") {
     return group.id;
   }
-  if (group.accessHash) {
-    return {
-      _: "inputChannel" as const,
-      channelId: bigInt(group.id) as unknown as number,
-      accessHash: bigInt(group.accessHash) as unknown as tl.Long,
-    };
+  // 正确：channelId = raw 正数；accessHash = long.js Long（绝不用 big-integer）
+  if (group.accessHash != null && group.accessHash !== "") {
+    return makeInputChannel(group.id, group.accessHash);
   }
-  // 兜底：mtcute resolvePeer（marked id 或 raw 均可；优先 -100 前缀）
+  // 兜底：用 marked id 走 mtcute peer 缓存
   try {
-    const marked = group.id > 0 ? Number(`-100${group.id}`) : group.id;
+    const marked = toMarkedChannelId(group.id);
     const peer = await client.resolvePeer(marked);
-    // inputPeerChannel / inputChannel 形状
     const p = peer as { _: string; channelId?: number | bigint; accessHash?: tl.Long };
     if (p && (p._ === "inputPeerChannel" || p._ === "inputChannel")) {
-      return {
-        _: "inputChannel",
-        channelId: p.channelId as number,
-        accessHash: p.accessHash as tl.Long,
-      };
+      return makeInputChannel(
+        Number(p.channelId),
+        p.accessHash as unknown as string | number | Long,
+      );
     }
     return peer as unknown as tl.TypeInputChannel;
   } catch (e: unknown) {
@@ -908,9 +939,10 @@ class PermissionManager {
         return meParticipant?._ === 'chatParticipantCreator' || meParticipant?._ === 'chatParticipantAdmin';
       }
 
+      const channel = await this.resolveChannelArg(client, chatId);
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId as unknown as MtcuteInputChannel,
+          channel: channel as unknown as MtcuteInputChannel,
           participant: await client.resolvePeer(me.id)
         });
 
@@ -922,7 +954,10 @@ class PermissionManager {
       }
       return false;
     } catch (e: unknown) {
-      logger.warn('aban: isMeAdmin check failed', e);
+      const msg = getErrorMessage(e);
+      if (!/CHANNEL_INVALID|CHANNEL_PRIVATE|USER_NOT_PARTICIPANT|PEER_ID_INVALID/.test(msg)) {
+        logger.warn('aban: isMeAdmin check failed', e);
+      }
       return false;
     }
   }
@@ -943,9 +978,10 @@ class PermissionManager {
         return targetParticipant?._ === 'chatParticipantCreator' || targetParticipant?._ === 'chatParticipantAdmin';
       }
 
+      const channel = await this.resolveChannelArg(client, chatId);
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId as unknown as MtcuteInputChannel,
+          channel: channel as unknown as MtcuteInputChannel,
           participant: await client.resolvePeer(userId)
         });
       
@@ -955,7 +991,11 @@ class PermissionManager {
         p?._ === 'channelParticipantAdmin'
       );
     } catch (e: unknown) {
-      logger.warn('aban: isOwnerOrAdmin check failed', e);
+      // CHANNEL_INVALID / USER_NOT_PARTICIPANT → 非管理员，不刷屏
+      const msg = getErrorMessage(e);
+      if (!/CHANNEL_INVALID|CHANNEL_PRIVATE|USER_NOT_PARTICIPANT|PEER_ID_INVALID/.test(msg)) {
+        logger.warn('aban: isOwnerOrAdmin check failed', e);
+      }
       return false;
     }
   }
@@ -977,9 +1017,10 @@ class PermissionManager {
         return meParticipant?._ === 'chatParticipantCreator' || meParticipant?._ === 'chatParticipantAdmin';
       }
 
+      const channel = await this.resolveChannelArg(client, chatId);
       const participant = await client.call({
           _: 'channels.getParticipant',
-          channel: chatId as unknown as MtcuteInputChannel,
+          channel: channel as unknown as MtcuteInputChannel,
           participant: await client.resolvePeer(me.id)
         });
       
@@ -990,9 +1031,44 @@ class PermissionManager {
       }
       return false;
     } catch (e: unknown) {
-      logger.warn('aban: canDeleteMessages check failed', e);
+      const msg = getErrorMessage(e);
+      if (!/CHANNEL_INVALID|CHANNEL_PRIVATE|USER_NOT_PARTICIPANT|PEER_ID_INVALID|Unknown object/.test(msg)) {
+        logger.warn('aban: canDeleteMessages check failed', e);
+      }
       return false;
     }
+  }
+
+  /** 把 ChatIdArg 规范成 inputChannel / inputPeerChannel */
+  private static async resolveChannelArg(
+    client: TelegramClient,
+    chatId: ChatIdArg,
+  ): Promise<tl.TypeInputChannel | MtcuteInputPeer | number> {
+    if (chatId && typeof chatId === "object") {
+      const o = chatId as { _?: string; channelId?: number; accessHash?: unknown; kind?: string; id?: number };
+      if (o._ === "inputChannel" || o._ === "inputPeerChannel") {
+        // 若 accessHash 是 big-integer，重建
+        if (o.accessHash != null && typeof (o.accessHash as { low?: unknown }).low !== "number") {
+          return makeInputChannel(Number(o.channelId), o.accessHash as string | number);
+        }
+        if (o._ === "inputPeerChannel") {
+          return makeInputChannel(Number(o.channelId), o.accessHash as string | number | Long);
+        }
+        return chatId as unknown as tl.TypeInputChannel;
+      }
+      if (o.kind === "channel" && o.id != null) {
+        return resolveChannelInput(client, o as ManagedGroup);
+      }
+    }
+    if (typeof chatId === "number") {
+      const peer = await client.resolvePeer(chatId);
+      const p = peer as { _: string; channelId?: number; accessHash?: Long };
+      if (p._ === "inputPeerChannel" || p._ === "inputChannel") {
+        return makeInputChannel(Number(p.channelId), p.accessHash as unknown as string | number | Long);
+      }
+      return peer as unknown as MtcuteInputPeer;
+    }
+    return chatId as unknown as MtcuteInputPeer;
   }
 }
 
@@ -1121,7 +1197,7 @@ class GroupManager {
     client: TelegramClient
   ): Promise<ManagedGroup[]> {
     // v4: mtcute iterDialogs 映射；旧 v3 可能缓存了空数组
-    const cached = await this.cache.get("managed_groups_v4");
+    const cached = await this.cache.get("managed_groups_v5");
     if (cached && Array.isArray(cached) && (cached as unknown[]).length > 0) {
       return cached as ManagedGroup[];
     }
@@ -1136,9 +1212,13 @@ class GroupManager {
       // 批量 sb/unsb 由各群实际 API 返回权限错误，避免 checkAdminPermission 误判导致「无管理群组」。
       for (const dialog of dialogs) {
         if (!(dialog.isChannel || dialog.isGroup)) continue;
-        const isChannel = !!dialog.isChannel;
-        const rawHash = isChannel ? dialog.entity?.accessHash : undefined;
+        // 有 accessHash 的一定是 channel/supergroup；不要仅因 isGroup 标成 basic chat
+        const rawHash = dialog.entity?.accessHash;
         const accessHash = rawHash != null ? String(rawHash) : undefined;
+        const isChannel =
+          !!dialog.isChannel ||
+          accessHash != null ||
+          (typeof dialog.id === "number" && String(dialog.id).startsWith("-100"));
         // entity.id = raw 正数 id（InputChannel.channelId / chatId）
         const rawId = Number(dialog.entity?.id);
         if (!Number.isFinite(rawId) || rawId === 0) continue;
@@ -1151,7 +1231,7 @@ class GroupManager {
       }
 
       try {
-        await this.cache.set("managed_groups_v4", groups as unknown as CacheEntry);
+        await this.cache.set("managed_groups_v5", groups as unknown as CacheEntry);
         // 清掉旧空缓存 key，避免其它路径读到 v3 空列表
         try {
           await this.cache.set("managed_groups_v3", [] as unknown as CacheEntry);
@@ -1245,9 +1325,25 @@ class BanManager {
       return;
     }
 
+    // 单群 ban/mute：chatId 可能是 marked id 或 Peer；统一 resolve
+    let channel: unknown = chatId;
+    if (typeof chatId === "number") {
+      const peer = await client.resolvePeer(chatId);
+      const p = peer as { _: string; channelId?: number; accessHash?: Long };
+      if (p._ === "inputPeerChannel" || p._ === "inputChannel") {
+        channel = makeInputChannel(Number(p.channelId), p.accessHash as unknown as string | number | Long);
+      } else {
+        channel = peer;
+      }
+    } else if (chatId && typeof chatId === "object") {
+      const o = chatId as { _?: string; channelId?: number; accessHash?: unknown };
+      if ((o._ === "inputChannel" || o._ === "inputPeerChannel") && o.accessHash != null && typeof (o.accessHash as { low?: unknown }).low !== "number") {
+        channel = makeInputChannel(Number(o.channelId), o.accessHash as string | number);
+      }
+    }
     await client.call({
         _: 'channels.editBanned',
-        channel: chatId as unknown as MtcuteInputChannel,
+        channel: channel as unknown as MtcuteInputChannel,
         participant: resolvedParticipant,
         bannedRights,
       });
@@ -1370,9 +1466,23 @@ class BanManager {
 
       const resolvedParticipant: tl.TypeInputPeer = participant || await (client as { resolvePeer: (target: unknown) => Promise<tl.TypeInputPeer> }).resolvePeer(userId);
 
+      // chatId 可能是 marked number；必须转 inputChannel
+      let channel: tl.TypeInputChannel | MtcuteInputChannel;
+      if (typeof chatId === "number") {
+        const peer = await client.resolvePeer(chatId);
+        const p = peer as { _: string; channelId?: number; accessHash?: Long };
+        if (p._ === "inputPeerChannel" || p._ === "inputChannel") {
+          channel = makeInputChannel(Number(p.channelId), p.accessHash as unknown as string | number | Long) as unknown as MtcuteInputChannel;
+        } else {
+          channel = peer as unknown as MtcuteInputChannel;
+        }
+      } else {
+        channel = chatId as unknown as MtcuteInputChannel;
+      }
+
       await client.call({
           _: 'channels.deleteParticipantHistory',
-          channel: chatId as unknown as MtcuteInputChannel,
+          channel: channel as unknown as MtcuteInputChannel,
           participant: resolvedParticipant,
         });
       
