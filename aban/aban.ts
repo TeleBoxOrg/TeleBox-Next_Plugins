@@ -237,25 +237,50 @@ class UserResolver {
     }
     
     // 从回复消息解析
+    // mtcute Message 没有 teleproto 的 .senderId，发送者在 .sender.id（Peer/User）
     const reply = await safeGetReplyMessage(message);
-    if (reply && (reply as { senderId?: number | string })?.senderId) {
-      const uid = Number((reply as { senderId?: number | string }).senderId);
-      const sender = await this.getReplySender(reply as { getSender?: () => Promise<unknown>; sender?: unknown });
-      const participant = sender?.type === 'user'
-        ? await this.safeGetInputEntity(client, sender!.raw as unknown as number | string)
-        : await this.safeGetInputEntity(client, uid);
-      const fallbackParticipant = participant || await this.resolveParticipantFromContext(client, message, uid, sender?.raw as PartialEntity | undefined);
+    if (reply) {
+      const senderPeer = (reply as { sender?: { id?: number | string; type?: string; inputPeer?: tl.TypeInputPeer } }).sender;
+      const legacySenderId = (reply as { senderId?: number | string }).senderId;
+      const uidRaw = senderPeer?.id ?? legacySenderId;
+      const uid = uidRaw != null && uidRaw !== "" ? Number(uidRaw) : NaN;
 
-      return {
-        user: sender,
-        uid,
-        participant: fallbackParticipant,
-        source: "reply",
-        resolutionError: fallbackParticipant ? undefined : "TARGET_ENTITY_UNRESOLVABLE",
-        chatType: this.getChatType(message),
-      };
+      if (Number.isFinite(uid) && uid !== 0) {
+        const sender = await this.getReplySender(reply as { sender?: unknown });
+        // Prefer mtcute Peer.inputPeer (has accessHash); never require teleproto getSender()
+        let participant: tl.TypeInputPeer | undefined =
+          senderPeer && typeof senderPeer === "object" && senderPeer.inputPeer
+            ? senderPeer.inputPeer
+            : undefined;
+        if (!participant && sender?.raw && typeof sender.raw === "object" && (sender.raw as { inputPeer?: tl.TypeInputPeer }).inputPeer) {
+          participant = (sender.raw as { inputPeer: tl.TypeInputPeer }).inputPeer;
+        }
+        if (!participant) {
+          participant = await this.safeGetInputEntity(client, uid);
+        }
+        if (!participant && sender?.raw) {
+          participant = await this.safeGetInputEntity(client, sender.raw);
+        }
+        const fallbackParticipant =
+          participant ||
+          (await this.resolveParticipantFromContext(
+            client,
+            message,
+            uid,
+            sender?.raw as PartialEntity | undefined,
+          ));
+
+        return {
+          user: sender ?? { id: uid, type: "user" as const },
+          uid,
+          participant: fallbackParticipant,
+          source: "reply",
+          resolutionError: fallbackParticipant ? undefined : "TARGET_ENTITY_UNRESOLVABLE",
+          chatType: this.getChatType(message),
+        };
+      }
     }
-    
+
     return { user: null, uid: null, source: "unknown", resolutionError: "NO_TARGET", chatType: this.getChatType(message) };
   }
 
@@ -310,21 +335,46 @@ class UserResolver {
   private static async getReplySender(reply: { sender?: unknown }): Promise<ResolvedUser | null> {
     try {
       const sender = (reply as { sender?: unknown }).sender;
-      if (sender && typeof sender === "object") {
-        const raw = sender as { _?: string; firstName?: string; first_name?: string; lastName?: string; last_name?: string; username?: string; title?: string; id?: number | string };
-        return {
-          id: Number(raw.id ?? 0),
-          firstName: raw.firstName ?? raw.first_name,
-          lastName: raw.lastName ?? raw.last_name,
-          username: raw.username,
-          title: raw.title,
-          type: (raw._ === "user" ? "user" : raw._ === "chat" ? "chat" : "channel") as "user" | "chat" | "channel",
-          raw: sender,
-        };
-      }
-      return null;
+      if (!sender || typeof sender !== "object") return null;
+
+      // mtcute Peer = User | Chat: .type / .id / .firstName / .username / .title / .inputPeer
+      const peer = sender as {
+        type?: string;
+        id?: number | string;
+        firstName?: string;
+        first_name?: string;
+        lastName?: string | null;
+        last_name?: string;
+        username?: string | null;
+        title?: string;
+        _?: string;
+        inputPeer?: tl.TypeInputPeer;
+      };
+
+      // AnonymousSender has type "anonymous" and no usable id for ban ops
+      if (peer.type === "anonymous") return null;
+
+      const id = Number(peer.id ?? 0);
+      if (!Number.isFinite(id) || id === 0) return null;
+
+      const t =
+        peer.type === "user" || peer.type === "bot" || peer._ === "user"
+          ? "user"
+          : peer.type === "group" || peer._ === "chat"
+            ? "chat"
+            : "channel";
+
+      return {
+        id,
+        firstName: peer.firstName ?? peer.first_name,
+        lastName: peer.lastName ?? peer.last_name ?? undefined,
+        username: peer.username ?? undefined,
+        title: peer.title,
+        type: t as "user" | "chat" | "channel",
+        raw: sender,
+      };
     } catch (e: unknown) {
-      logger.warn('aban: failed to extract sender entity', e);
+      logger.warn("aban: failed to extract sender entity", e);
       return null;
     }
   }
@@ -383,9 +433,30 @@ class UserResolver {
     target: unknown
   ): Promise<tl.TypeInputPeer | undefined> {
     try {
-      return await (client as unknown as ClientInternals).getInputEntity(target) as tl.TypeInputPeer | undefined;
+      if (target == null) return undefined;
+      // Already an InputPeer / Peer with inputPeer
+      if (typeof target === "object") {
+        const o = target as { _: string; inputPeer?: tl.TypeInputPeer };
+        if (o.inputPeer) return o.inputPeer;
+        if (typeof o._ === "string" && o._.startsWith("inputPeer")) {
+          return target as tl.TypeInputPeer;
+        }
+      }
+      // mtcute public API
+      if (typeof (client as { resolvePeer?: (t: unknown) => Promise<tl.TypeInputPeer> }).resolvePeer === "function") {
+        return await (client as { resolvePeer: (t: unknown) => Promise<tl.TypeInputPeer> }).resolvePeer(target);
+      }
+      // legacy/internal fallbacks
+      const internals = client as unknown as ClientInternals;
+      if (typeof internals.resolvePeer === "function") {
+        return (await internals.resolvePeer(target)) as tl.TypeInputPeer;
+      }
+      if (typeof internals.getInputEntity === "function") {
+        return (await internals.getInputEntity(target)) as tl.TypeInputPeer;
+      }
+      return undefined;
     } catch (e: unknown) {
-      logger.warn('aban: safeGetInputEntity failed', e);
+      logger.warn("aban: safeGetInputEntity failed", e);
       return undefined;
     }
   }
@@ -1259,7 +1330,8 @@ class CommandHandlers {
       }
 
       // 解析参数
-      const args = chatIdOf(message) ? message.text?.split(" ").slice(1) || [] : [];
+      const rawText = String(message.text ?? message.rawText ?? "").trim();
+      const args = rawText ? rawText.split(/\s+/).slice(1) : [];
       const { user, uid, participant, resolutionError, chatType } = await UserResolver.resolveTarget(client, message, args);
 
       if (!uid) {
@@ -1363,7 +1435,8 @@ class CommandHandlers {
     message: any
   ): Promise<void> {
     try {
-      const args = chatIdOf(message) ? message.text?.split(" ").slice(1) || [] : [];
+      const rawText = String(message.text ?? message.rawText ?? "").trim();
+      const args = rawText ? rawText.split(/\s+/).slice(1) : [];
       const { user, uid, participant, resolutionError } = await UserResolver.resolveTarget(client, message, args);
 
       if (!uid) {
@@ -1512,7 +1585,8 @@ class CommandHandlers {
     message: any
   ): Promise<void> {
     try {
-      const args = chatIdOf(message) ? message.text?.split(" ").slice(1) || [] : [];
+      const rawText = String(message.text ?? message.rawText ?? "").trim();
+      const args = rawText ? rawText.split(/\s+/).slice(1) : [];
       const { user, uid, participant, resolutionError } = await UserResolver.resolveTarget(client, message, args);
 
       if (!uid) {
