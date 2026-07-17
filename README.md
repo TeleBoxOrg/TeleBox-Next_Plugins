@@ -123,6 +123,7 @@ TeleBox-Next-Plugins 是 [TeleBox-Next](https://github.com/TeleBoxOrg/TeleBox-Ne
 - `sum` - 群消息总结  
 - `t` - 文字转语音  
 - `teletype` - 打字机效果  
+- `theme-converter` - 🎨 Telegram 主题转换器 Android↔Desktop↔TGX  
 - `tmp_admin` - 临时管理员  
 - `trace` - 全局追踪点赞  
 - `tts` - Azure文字转语音  
