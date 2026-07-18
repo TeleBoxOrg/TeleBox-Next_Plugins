@@ -45,7 +45,7 @@ async function downloadCustomEmojiBuffer(client: any, emojiId: string): Promise<
   try {
     const docs = await client.call({
       _: 'messages.getCustomEmojiDocuments',
-      documentId: [BigInt(emojiId)],
+      document_id: [BigInt(emojiId)],
     });
     const doc = docs?.[0];
     if (!doc) {

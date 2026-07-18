@@ -1424,7 +1424,7 @@ async function getCustomEmojiDocuments(client: any, ids: string[]): Promise<any[
   try {
     return await client.call({
       _: 'messages.getCustomEmojiDocuments',
-      documentId: unique.map((id) => BigInt(id)),
+      document_id: unique.map((id) => BigInt(id)),
     });
   } catch (err: unknown) {
     logger.warn("quote custom emoji fetch failed", getErrorMessage(err));
