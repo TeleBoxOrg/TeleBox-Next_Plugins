@@ -43,24 +43,14 @@ async function downloadCustomEmojiBuffer(client: any, emojiId: string): Promise<
   if (!client || !emojiId) return undefined;
   if (customEmojiCache.has(emojiId)) return customEmojiCache.get(emojiId);
   try {
-    const docs = await client.call({
-      _: 'messages.getCustomEmojiDocuments',
-      document_id: [BigInt(emojiId)],
-    });
-    const doc = docs?.[0];
-    if (!doc) {
+    // Use mtcute high-level API: returns Sticker[] which are FileLocation subclasses
+    const stickers = await client.getCustomEmojis([BigInt(emojiId)]);
+    const sticker = stickers?.[0];
+    if (!sticker) {
       customEmojiCache.set(emojiId, undefined);
       return undefined;
     }
-    // Raw TL document can't be passed to downloadAsBuffer; build InputDocumentFileLocation
-    const location = {
-      _: 'inputDocumentFileLocation',
-      id: doc.id,
-      accessHash: doc.accessHash,
-      fileReference: doc.fileReference,
-      thumbSize: '',
-    };
-    const data = await client.downloadAsBuffer(location, { dcId: doc.dcId });
+    const data = await client.downloadAsBuffer(sticker);
     const buffer = Buffer.from(data);
     if (Buffer.isBuffer(buffer) && buffer.length > 0) {
       customEmojiCache.set(emojiId, buffer);
@@ -1151,8 +1141,8 @@ class YvluPlugin extends Plugin {
                 username:
                   photo && shouldShowAvatar ? username || undefined : undefined,
                 photo,
-                emoji_status: shouldShowAvatar
-                  ? (emojiStatusPayload || (emojiStatus ? { custom_emoji_id: String(emojiStatus) } : undefined))
+                emoji_status: shouldShowAvatar && emojiStatus
+                  ? String(emojiStatus)
                   : undefined,
               },
               text: message.text || "",
