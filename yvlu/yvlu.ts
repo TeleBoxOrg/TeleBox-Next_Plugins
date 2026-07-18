@@ -750,35 +750,12 @@ class YvluPlugin extends Plugin {
         outputFormat = args[1] === "png" ? "image" : args[1];
         count = parseInt(args[2]) || 1;
         valid = true;
-      } else {
-        // 造谣文本本身也是合法参数，后续解析器会保留完整原文。
-        valid = true;
       }
 
       if (saveToSet) {
         // 处理保存贴纸/图片到贴纸包的逻辑
         await this.handleSaveStickerToSet(msg);
       } else if (valid) {
-        // 造谣模式：第一个非选项参数起，后续内容全部按原文保留。
-        const optionArgs = args.slice(1);
-        let fabricateText: string | undefined;
-        for (let i = 0; i < optionArgs.length; i++) {
-          const value = optionArgs[i].toLowerCase();
-          const isOption =
-            value === "r" ||
-            value === "reply" ||
-            value === "s" ||
-            value === "webp" ||
-            value === "image" ||
-            value === "png" ||
-            value === "stories" ||
-            /^\d+$/.test(value);
-          if (!isOption) {
-            fabricateText = optionArgs.slice(i).join(" ");
-            break;
-          }
-        }
-
         let replied = await safeGetReplyMessage(msg);
         if (!replied) {
           await msg.edit({ text: "请回复一条消息" });
@@ -795,7 +772,7 @@ class YvluPlugin extends Plugin {
           const client = await getGlobalClient();
 
           const messages = await safeGetMessages(msg.client, msg.chat, {
-            offsetId: replied!.id,
+            offsetId: replied!.id - 1,
             limit: count,
             reverse: true,
           });
@@ -1122,8 +1099,8 @@ class YvluPlugin extends Plugin {
                   ? emojiStatus || undefined
                   : undefined,
               },
-              text: fabricateText && i === 0 ? fabricateText : (message.text || ""),
-              entities: fabricateText && i === 0 ? [] : entities,
+              text: message.text || "",
+              entities: entities,
               avatar: shouldShowAvatar,
               ...(replyBlock ? { replyMessage: replyBlock } : {}),
             };

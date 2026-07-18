@@ -805,27 +805,31 @@ async function downloadEntityAvatar(client: any, entity: any): Promise<Buffer | 
   const key = stableEntityKey(entity);
   if (key && avatarCache.has(key)) return avatarCache.get(key);
 
-  try {
-    const photos = await client.getProfilePhotos(entity, { limit: 1 });
-    const photo = photos?.[0];
-    if (!photo) {
-      if (key) avatarCache.set(key, undefined);
+  const tryDownload = async (isBig: boolean): Promise<Buffer | undefined> => {
+    try {
+      const peer = typeof entity === "object" && entity._ ? entity : await client.resolvePeer(entity).catch((e: unknown) => { logger.warn("[quote] resolvePeer failed", getErrorMessage(e)); return null; });
+      if (!peer) return undefined;
+      const fullUser = await client.call({ _: 'users.getFullUser', id: peer }).catch((e: unknown) => { logger.warn("[quote] getFullUser failed", getErrorMessage(e)); return null; });
+      const photo = fullUser?.full_user?.photo;
+      if (!photo || photo._ !== 'userProfilePhoto') return undefined;
+      const location = {
+        _: 'inputPeerPhotoFileLocation' as const,
+        big: isBig,
+        peer: peer,
+        photo_id: photo.photo_id,
+      };
+      const buffer = await client.downloadAsBuffer(location).catch((e: unknown) => { logger.warn("[quote] downloadAsBuffer failed", getErrorMessage(e)); return null; });
+      return Buffer.isBuffer(buffer) && buffer.length > 0 ? buffer : undefined;
+    } catch (err: unknown) {
+      logger.warn(`quote avatar ${isBig ? "big" : "small"} download failed`, getErrorMessage(err));
       return undefined;
     }
-    const data = await client.downloadAsBuffer(photo);
-    const buffer = Buffer.from(data);
-    if (!(Buffer.isBuffer(buffer) && buffer.length > 0)) {
-      if (key) avatarCache.set(key, undefined);
-      return undefined;
-    }
-    const normalized = await normalizeAvatarBuffer(buffer);
-    if (key) avatarCache.set(key, normalized);
-    return normalized;
-  } catch (err: unknown) {
-    logger.warn("quote avatar download failed", getErrorMessage(err));
-    if (key) avatarCache.set(key, undefined);
-    return undefined;
-  }
+  };
+
+  const [small, big] = await Promise.all([tryDownload(false), tryDownload(true)]);
+  const normalized = small ? await normalizeAvatarBuffer(small) : big ? await normalizeAvatarBuffer(big) : undefined;
+  if (key) avatarCache.set(key, normalized);
+  return normalized;
 }
 
 async function downloadSenderAvatar(msg: MessageContext, entity?: any): Promise<Buffer | undefined> {
