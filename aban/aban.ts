@@ -154,9 +154,9 @@ const HELP_TEXT = `<b>封禁管理</b>
 <code>${mainPrefix}unban</code> 解封
 <code>${mainPrefix}mute [time]</code> 禁言 (如 60s/5m/1h/1d，不填则永久)
 <code>${mainPrefix}unmute</code> 解禁言
-<code>${mainPrefix}sb</code> 批量封禁
-<code>${mainPrefix}unsb</code> 批量解封
-<code>${mainPrefix}refresh</code> 刷新
+<code>${mainPrefix}sb</code> 批量封禁（仅有管理权的群）
+<code>${mainPrefix}unsb</code> 批量解封（仅有管理权的群）
+<code>${mainPrefix}refresh</code> 刷新管理群缓存
 
 回复消息或@用户名`;
 
@@ -1196,8 +1196,8 @@ class GroupManager {
   static async getManagedGroups(
     client: TelegramClient
   ): Promise<ManagedGroup[]> {
-    // v4: mtcute iterDialogs 映射；旧 v3 可能缓存了空数组
-    const cached = await this.cache.get("managed_groups_v5");
+    // v6: 仅缓存「自己有 ban/delete 管理权」的群；旧 v5 含全部会话
+    const cached = await this.cache.get("managed_groups_v6");
     if (cached && Array.isArray(cached) && (cached as unknown[]).length > 0) {
       return cached as ManagedGroup[];
     }
@@ -1208,8 +1208,9 @@ class GroupManager {
       const dialogs = await this.getAllManageableDialogs(client);
       logger.info(`[GroupManager] 枚举到 ${dialogs.length} 个群/频道会话`);
 
-      // 与 Classic 对齐：不再预检查管理员权限。
-      // 批量 sb/unsb 由各群实际 API 返回权限错误，避免 checkAdminPermission 误判导致「无管理群组」。
+      // 先构造带 accessHash 的 ManagedGroup，再经 resolvePermissionTarget 做权限探测，
+      // 避免 peerId 格式问题导致 checkAdminPermission 假阴性。
+      const candidates: ManagedGroup[] = [];
       for (const dialog of dialogs) {
         if (!(dialog.isChannel || dialog.isGroup)) continue;
         // 有 accessHash 的一定是 channel/supergroup；不要仅因 isGroup 标成 basic chat
@@ -1222,7 +1223,7 @@ class GroupManager {
         // entity.id = raw 正数 id（InputChannel.channelId / chatId）
         const rawId = Number(dialog.entity?.id);
         if (!Number.isFinite(rawId) || rawId === 0) continue;
-        groups.push({
+        candidates.push({
           id: rawId,
           title: dialog.title || "Unknown",
           kind: isChannel ? ("channel" as const) : ("chat" as const),
@@ -1230,13 +1231,34 @@ class GroupManager {
         });
       }
 
+      const limit = (await ensurePLimit())(6);
+      const checkResults = await Promise.all(
+        candidates.map((group) =>
+          limit(async () => {
+            try {
+              const target = await resolvePermissionTarget(client, group);
+              const ok = await PermissionManager.checkAdminPermission(client, target);
+              return ok ? group : null;
+            } catch {
+              return null;
+            }
+          })
+        )
+      );
+      for (const g of checkResults) {
+        if (g) groups.push(g);
+      }
+      logger.info(`[GroupManager] 有管理权群组 ${groups.length}/${candidates.length}`);
+
       try {
-        await this.cache.set("managed_groups_v5", groups as unknown as CacheEntry);
-        // 清掉旧空缓存 key，避免其它路径读到 v3 空列表
-        try {
-          await this.cache.set("managed_groups_v3", [] as unknown as CacheEntry);
-        } catch {
-          /* ignore */
+        await this.cache.set("managed_groups_v6", groups as unknown as CacheEntry);
+        // 清掉旧缓存 key
+        for (const k of ["managed_groups_v3", "managed_groups_v5"] as const) {
+          try {
+            await this.cache.set(k, [] as unknown as CacheEntry);
+          } catch {
+            /* ignore */
+          }
         }
       } catch (cacheError: unknown) {
         logger.error(`[GroupManager] 缓存群组失败: ${cacheError}`);
@@ -2210,7 +2232,7 @@ class AbanPlugin extends Plugin {
       try {
         await GroupManager.clearCache();
         const groups = await GroupManager.getManagedGroups(client);
-        await MessageManager.smartEdit(status, `✅ 已刷新 ${groups.length}个群组`);
+        await MessageManager.smartEdit(status, `✅ 已刷新 ${groups.length} 个有管理权的群组`);
       } catch (_e: unknown) {
         await MessageManager.smartEdit(status, `❌ 刷新失败`);
       }
