@@ -1224,6 +1224,9 @@ class GroupManager {
     isChannel: boolean;
     isGroup: boolean;
     title: string;
+    isCreator?: boolean;
+    isAdmin?: boolean;
+    canBan?: boolean;
     entity?: { id?: number; accessHash?: string | number; inputPeer?: unknown };
   }>> {
     const dialogMap = new Map<number, {
@@ -1231,6 +1234,9 @@ class GroupManager {
       isChannel: boolean;
       isGroup: boolean;
       title: string;
+      isCreator?: boolean;
+      isAdmin?: boolean;
+      canBan?: boolean;
       entity?: { id?: number; accessHash?: string | number; inputPeer?: unknown };
     }>();
 
@@ -1307,11 +1313,26 @@ class GroupManager {
               ? ((peer as { accessHash: string | number }).accessHash as string | number)
               : undefined;
 
+        // mtcute Dialog.peer 是 Chat：isCreator/isAdmin/adminRights 来自会话快照，无需再 GetParticipant
+        const peerAny = peer as {
+          isCreator?: boolean;
+          isAdmin?: boolean;
+          adminRights?: { banUsers?: boolean; deleteMessages?: boolean } | null;
+          raw?: { creator?: boolean; adminRights?: { banUsers?: boolean; deleteMessages?: boolean } };
+        };
+        const rawRights = peerAny.adminRights ?? peerAny.raw?.adminRights ?? null;
+        const isCreator = !!(peerAny.isCreator ?? peerAny.raw?.creator);
+        const isAdmin = !!(peerAny.isAdmin ?? rawRights);
+        const canBan = isCreator || !!(rawRights && (rawRights.banUsers || rawRights.deleteMessages));
+
         dialogMap.set(markedId, {
           id: markedId,
           isChannel: isChannelLike,
           isGroup: isBasicGroup || chatType === "supergroup" || chatType === "gigagroup",
           title: peer.title || "Unknown",
+          isCreator,
+          isAdmin,
+          canBan,
           entity: {
             id: rawId,
             accessHash,
@@ -1335,8 +1356,9 @@ class GroupManager {
   static async getManagedGroups(
     client: TelegramClient
   ): Promise<ManagedGroup[]> {
-    // v6: 仅缓存「自己有 ban/delete 管理权」的群；旧 v5 含全部会话
-    const cached = await this.cache.get("managed_groups_v6");
+    // v7: 用 dialog.peer 自带的 creator/adminRights 本地过滤（零 RPC）。
+    // v6 对每群 GetParticipant，易 CHANNEL_INVALID/假阴性 → refresh 统计为 0。
+    const cached = await this.cache.get("managed_groups_v7");
     if (cached && Array.isArray(cached) && (cached as unknown[]).length > 0) {
       return cached as ManagedGroup[];
     }
@@ -1347,11 +1369,14 @@ class GroupManager {
       const dialogs = await this.getAllManageableDialogs(client);
       logger.info(`[GroupManager] 枚举到 ${dialogs.length} 个群/频道会话`);
 
-      // 先构造带 accessHash 的 ManagedGroup，再经 resolvePermissionTarget 做权限探测，
-      // 避免 peerId 格式问题导致 checkAdminPermission 假阴性。
-      const candidates: ManagedGroup[] = [];
+      let skippedNoRights = 0;
       for (const dialog of dialogs) {
         if (!(dialog.isChannel || dialog.isGroup)) continue;
+        // 会话快照已标明无 ban/delete 管理权 → 跳过（不发 RPC）
+        if (!dialog.canBan) {
+          skippedNoRights++;
+          continue;
+        }
         // 有 accessHash 的一定是 channel/supergroup；不要仅因 isGroup 标成 basic chat
         const rawHash = dialog.entity?.accessHash;
         const accessHash = rawHash != null ? String(rawHash) : undefined;
@@ -1362,37 +1387,21 @@ class GroupManager {
         // entity.id = raw 正数 id（InputChannel.channelId / chatId）
         const rawId = Number(dialog.entity?.id);
         if (!Number.isFinite(rawId) || rawId === 0) continue;
-        candidates.push({
+        groups.push({
           id: rawId,
           title: dialog.title || "Unknown",
           kind: isChannel ? ("channel" as const) : ("chat" as const),
           accessHash,
         });
       }
-
-      const limit = (await ensurePLimit())(6);
-      const checkResults = await Promise.all(
-        candidates.map((group) =>
-          limit(async () => {
-            try {
-              const target = await resolvePermissionTarget(client, group);
-              const ok = await PermissionManager.checkAdminPermission(client, target);
-              return ok ? group : null;
-            } catch {
-              return null;
-            }
-          })
-        )
+      logger.info(
+        `[GroupManager] 有管理权群组 ${groups.length}/${dialogs.length}（本地 adminRights 过滤，跳过无权限 ${skippedNoRights}）`,
       );
-      for (const g of checkResults) {
-        if (g) groups.push(g);
-      }
-      logger.info(`[GroupManager] 有管理权群组 ${groups.length}/${candidates.length}`);
 
       try {
-        await this.cache.set("managed_groups_v6", groups as unknown as CacheEntry);
-        // 清掉旧缓存 key
-        for (const k of ["managed_groups_v3", "managed_groups_v5"] as const) {
+        await this.cache.set("managed_groups_v7", groups as unknown as CacheEntry);
+        // 清掉旧缓存 key（含 v6 可能被假阴性写空的结果）
+        for (const k of ["managed_groups_v3", "managed_groups_v5", "managed_groups_v6"] as const) {
           try {
             await this.cache.set(k, [] as unknown as CacheEntry);
           } catch {
