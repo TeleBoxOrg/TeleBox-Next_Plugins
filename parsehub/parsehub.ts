@@ -1,4 +1,4 @@
-import { Plugin } from "@utils/pluginBase";
+import { Plugin, type PanelSettingsAdapter, type PanelSettingField, type PanelFieldType } from "@utils/pluginBase";
 import { getPrefixes } from "@utils/pluginManager";
 import { createDirectoryInAssets } from "@utils/pathHelpers";
 import * as path from "path";
@@ -9,7 +9,6 @@ import { thtml as html } from "@mtcute/html-parser";
 import { getGlobalClient } from "@utils/runtimeManager";
 import { tl, Long } from "@mtcute/node";
 import { Message } from "@mtcute/core";
-import { TelegramClient } from "@mtcute/core/highlevel/client.js";
 import { logger } from "@utils/logger";
 import { sleep } from "@utils/asyncHelpers";
 import { getErrorMessage } from "@utils/errorHelpers";
@@ -93,7 +92,6 @@ function writeState(state: InitState) {
 
 let initState: InitState = readState();
 let ignoredUpToId = Number(initState.ignoredUpToId || 0) || 0;
-
 
 // Common progress prefix decoration characters (blocks, emoji, zero-width)
 const PROGRESS_DECO_RE = /^[\s\u2580-\u259F\u25A0-\u25FF\u2000-\u200F\uFEFF\u3000]+/u;
@@ -354,12 +352,9 @@ async function relayParseResult(
         initState.initialized = true;
         initState.ignoredUpToId = botMsg.id;
         writeState(initState);
-        lastId = Math.max(lastId, botMsg.id);
-        progressIds.delete(botMsg.id);
         continue;
       }
 
-      // New final, or progress→final edit of a known progress id
       const isNew = botMsg.id > lastId || progressIds.has(botMsg.id) || !finalMessages.has(botMsg.id);
       if (!isNew && finalMessages.has(botMsg.id)) {
         // already captured; still refresh object in case caption/media changed
@@ -443,93 +438,35 @@ async function relayParseResult(
 }
 
 class ParseHubPlugin extends Plugin {
+  description = helpText;
 
-  description: string = `\n${pluginName}\n\n${helpText}`;
-  cmdHandlers: Record<string, (msg: MessageContext) => Promise<void>> = {
+  cmdHandlers = {
     parsehub: async (msg: MessageContext) => {
-      const rawText = msg.text || "";
-      const cleaned = rawText.replace(
-        new RegExp(`^${commandName}\\s*`, "i"),
-        "",
-      );
-      let links = extractLinks(cleaned);
+      await ensureBotReady(msg);
 
-      // 若命令未包含链接且为回复消息，从被回复消息中提取链接
-      if (!links.length && msg.replyToMessage?.id) {
-        try {
-          const replied = await safeGetReplyMessage(msg);
-          const replyText = replied?.text || "";
-          const replyLinks = extractLinks(replyText);
-          if (replyLinks.length) {
-            links = replyLinks;
-          }
-        } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
-      }
+      const client = await getGlobalClient();
+      if (!client) return;
 
-      // 若命令和被回复消息都包含链接，合并去重，命令里的在前
-      if (msg.replyToMessage?.id) {
-        try {
-          const replied = await safeGetReplyMessage(msg);
-          const replyText = replied?.text || "";
-          const replyLinks = extractLinks(replyText);
-          if (replyLinks.length) {
-            const set = new Set<string>(links);
-            for (const l of replyLinks) set.add(l);
-            links = Array.from(set);
-          }
-        } catch (e: unknown) { logger.warn('[parsehub] reply fetch failed:', e) }
-      }
+      const links = extractLinks(msg.text || "");
+      const replyLinks = msg.replyToMessage
+        ? extractLinks(msg.replyToMessage.text || "")
+        : [];
+      const allLinks = [...new Set([...links, ...replyLinks])];
 
-      if (!links.length) {
+      if (allLinks.length === 0) {
         await msg.edit({ text: html(helpText) });
         return;
       }
 
-      if (links.length > 1) {
-        links = [links[0]];
-      }
+      const baselineId = initState.ignoredUpToId || 0;
 
-      await msg.edit({
-        text: html(`✅ 已提交链接至 @${BOT_USERNAME}，正在解析中，请等待。`),
-      });
-
-      await ensureBotReady(msg);
-      const client = await getGlobalClient();
-      if (!client) {
-        await msg.edit({
-          text: `❌ 无法获取 Telegram 客户端实例，请稍后重试。`,
-        });
-        return;
-      }
-
-      let baselineId = await getLatestBotMessageId(client);
-      // If we have recorded a welcome message id to ignore, advance baseline
-      if (ignoredUpToId > baselineId) {
-        baselineId = ignoredUpToId;
-      }
-      // If first-run flag is set but latest already moved beyond pre-start,
-      // treat initialization as complete to avoid skipping valid results.
-      if (
-        shouldIgnoreNextBotMessage &&
-        firstRunPreStartLastId > 0 &&
-        baselineId > firstRunPreStartLastId
-      ) {
-        shouldIgnoreNextBotMessage = false;
-        initState.initialized = true;
-        initState.ignoredUpToId = baselineId;
-        writeState(initState);
-      }
-
-      for (const link of links) {
+      for (const link of allLinks) {
         const outcome = await relayParseResult(msg, link, baselineId);
-        baselineId = outcome.lastId;
+
+        const reasonText = describeReason(outcome.reason);
+        const detail = outcome.error ? ` (${htmlEscape(outcome.error)})` : "";
 
         if (!outcome.forwarded) {
-          const reasonText = htmlEscape(describeReason(outcome.reason));
-          const detail =
-            outcome.error && outcome.error !== "undefined"
-              ? `\n\n错误信息：${htmlEscape(outcome.error)}`
-              : "";
           await client.sendText(msg.chat.id, html(`⚠️ 未能获取 <b>${htmlEscape(link)}</b> 的最终结果（${reasonText}）。请稍后重试或直接私聊 @${BOT_USERNAME}。${detail}`), {
             replyTo: msg.id,
           });
@@ -541,6 +478,64 @@ class ParseHubPlugin extends Plugin {
       try {
         await msg.delete();
       } catch (e: unknown) { logger.warn('[parsehub] msg already deleted:', e) }
+    },
+  };
+
+  // Panel Settings Adapter
+  panelAdapter: PanelSettingsAdapter = {
+    id: "parsehub",
+    title: "ParseHub 解析",
+    description: "链接解析插件状态：初始化状态、忽略消息 ID",
+    category: "插件配置",
+    icon: "🔗",
+    getSchema: (): PanelSettingField[] => [
+      {
+        key: "initialized",
+        label: "已初始化",
+        type: "boolean",
+        default: false,
+        description: "是否已完成首次启动初始化",
+      },
+      {
+        key: "ignoredUpToId",
+        label: "忽略消息 ID",
+        type: "number",
+        min: 0,
+        default: 0,
+        description: "启动时忽略的最大消息 ID (避免处理历史消息)",
+      },
+      {
+        key: "resetState",
+        label: "重置状态",
+        type: "boolean",
+        default: false,
+        description: "开启后保存将清空状态文件 (需手动关闭)",
+      },
+    ],
+    getValues: async () => {
+      const state = readState();
+      return {
+        initialized: state.initialized,
+        ignoredUpToId: state.ignoredUpToId || 0,
+        resetState: false,
+      };
+    },
+    setValues: async (patch: Record<string, unknown>) => {
+      if (patch.resetState === true) {
+        try {
+          fs.unlinkSync(STATE_PATH);
+          logger.info("[parsehub] State file reset via panel");
+        } catch { }
+        return;
+      }
+
+      const state: InitState = {
+        initialized: Boolean(patch.initialized ?? initState.initialized),
+        ignoredUpToId: Number(patch.ignoredUpToId ?? initState.ignoredUpToId || 0) || 0,
+      };
+      writeState(state);
+      initState = state;
+      ignoredUpToId = state.ignoredUpToId || 0;
     },
   };
 }
